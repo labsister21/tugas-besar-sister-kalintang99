@@ -1,6 +1,6 @@
 class ApiService {
   private getBaseUrl(nodeId: number): string {
-    return `http://localhost:${5000 + nodeId}`;
+    return `http://localhost:${3000 + nodeId}/commands`;
   }
 
   private async makeRequest(

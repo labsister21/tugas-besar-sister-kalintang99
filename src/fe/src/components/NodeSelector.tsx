@@ -19,7 +19,7 @@ export default function NodeSelector({
       >
         {nodes.map((node) => (
           <option key={node} value={node} className="bg-gray-800">
-            Node {node} (Port {5000 + node})
+            Node {node} (Port {3000 + node})
           </option>
         ))}
       </select>

@@ -13,7 +13,7 @@ export default function Terminal({ selectedNode }: TerminalProps) {
     {
       type: "info",
       content: `Connected to Node ${selectedNode} (localhost:${
-        5000 + selectedNode
+        3000 + selectedNode
       })`,
     },
   ]);
@@ -27,7 +27,7 @@ export default function Terminal({ selectedNode }: TerminalProps) {
       {
         type: "info",
         content: `Connected to Node ${selectedNode} (localhost:${
-          5000 + selectedNode
+          3000 + selectedNode
         })`,
       },
     ]);
@@ -38,6 +38,12 @@ export default function Terminal({ selectedNode }: TerminalProps) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [lines]);
+
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +68,6 @@ export default function Terminal({ selectedNode }: TerminalProps) {
         ]);
       } else if (result == "CLEAR_TERMINAL") {
         setLines([]);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
       } else {
         setLines((prev) => [...prev, { type: "output", content: result }]);
       }
@@ -97,7 +100,7 @@ export default function Terminal({ selectedNode }: TerminalProps) {
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
         </div>
         <span className="text-gray-300 text-sm ml-4">
-          Node {selectedNode} - localhost:{5000 + selectedNode}
+          Node {selectedNode} - localhost:{3000 + selectedNode}
         </span>
       </div>
 
