@@ -18,7 +18,7 @@ for ((i=1; i<=N; i++)); do
   for ((j=1; j<=N; j++)); do
     if [ $j -ne $i ]; then
       PEER_PORT=$((BASE_PORT + j - 1))
-      PEERS+=("http://backend$j:$PEER_PORT")
+      PEERS+=("http://localhost:$PEER_PORT")
     fi
   done
   PEER_STRING=$(IFS=, ; echo "${PEERS[*]}")

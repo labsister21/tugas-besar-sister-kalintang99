@@ -14,7 +14,7 @@ services:
     environment:
       - ID=1
       - PORT=3001
-      - PEERS=http://backend2:3002,http://backend3:3003
+      - PEERS=http://localhost:3002,http://localhost:3003
       - CHOKIDAR_USEPOLLING=true
     command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
 
@@ -31,7 +31,7 @@ services:
     environment:
       - ID=2
       - PORT=3002
-      - PEERS=http://backend1:3001,http://backend3:3003
+      - PEERS=http://localhost:3001,http://localhost:3003
       - CHOKIDAR_USEPOLLING=true
     command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
 
@@ -48,7 +48,7 @@ services:
     environment:
       - ID=3
       - PORT=3003
-      - PEERS=http://backend1:3001,http://backend2:3002
+      - PEERS=http://localhost:3001,http://localhost:3002
       - CHOKIDAR_USEPOLLING=true
     command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
 
