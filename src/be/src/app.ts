@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import routes from "@/routes/api.routes";
 import raftStateStore from "@/store/raftState.store";
+import { startHeartbeat } from "@/services/heartbeat.services";
 
 const app = express();
 const args = require("minimist")(process.argv.slice(2));
@@ -20,5 +21,9 @@ console.log(`Status: ${raftStateStore.status}`);
 app.use(express.json());
 app.use(cors());
 app.use("/", routes);
+
+if (raftStateStore.status === "leader") {
+  startHeartbeat();
+}
 
 export default app;
