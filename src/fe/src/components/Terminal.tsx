@@ -6,32 +6,34 @@ import type { TerminalLine } from "@/types/terminal";
 
 interface TerminalProps {
   selectedNode: number;
+  lines: TerminalLine[];
+  updateLines: (
+    newLines: TerminalLine[] | ((prevLines: TerminalLine[]) => TerminalLine[])
+  ) => void;
 }
 
-export default function Terminal({ selectedNode }: TerminalProps) {
-  const [lines, setLines] = useState<TerminalLine[]>([
-    {
-      type: "info",
-      content: `Connected to Node ${selectedNode} (localhost:${
-        3000 + selectedNode
-      })`,
-    },
-  ]);
+export default function Terminal({
+  selectedNode,
+  lines,
+  updateLines,
+}: TerminalProps) {
   const [currentInput, setCurrentInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLines([
-      {
-        type: "info",
-        content: `Connected to Node ${selectedNode} (localhost:${
-          3000 + selectedNode
-        })`,
-      },
-    ]);
-  }, [selectedNode]);
+    if (lines.length === 0) {
+      updateLines([
+        {
+          type: "info",
+          content: `Connected to Node ${selectedNode} (localhost:${
+            3000 + selectedNode
+          })`,
+        },
+      ]);
+    }
+  }, [selectedNode, lines, updateLines]);
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -50,7 +52,10 @@ export default function Terminal({ selectedNode }: TerminalProps) {
     if (!currentInput.trim() || isLoading) return;
 
     const command = currentInput.trim();
-    setLines((prev) => [...prev, { type: "input", content: `> ${command}` }]);
+    updateLines((prev) => [
+      ...prev,
+      { type: "input", content: `> ${command}` },
+    ]);
     setCurrentInput("");
     setIsLoading(true);
 
@@ -59,7 +64,7 @@ export default function Terminal({ selectedNode }: TerminalProps) {
 
       if (result.includes("\n")) {
         const resultLines = result.split("\n");
-        setLines((prev) => [
+        updateLines((prev) => [
           ...prev,
           ...resultLines.map((line) => ({
             type: "output" as const,
@@ -67,12 +72,19 @@ export default function Terminal({ selectedNode }: TerminalProps) {
           })),
         ]);
       } else if (result == "CLEAR_TERMINAL") {
-        setLines([]);
+        updateLines([
+          {
+            type: "info",
+            content: `Connected to Node ${selectedNode} (localhost:${
+              3000 + selectedNode
+            })`,
+          },
+        ]);
       } else {
-        setLines((prev) => [...prev, { type: "output", content: result }]);
+        updateLines((prev) => [...prev, { type: "output", content: result }]);
       }
     } catch (error) {
-      setLines((prev) => [
+      updateLines((prev) => [
         ...prev,
         {
           type: "error",
@@ -115,7 +127,9 @@ export default function Terminal({ selectedNode }: TerminalProps) {
         ))}
 
         <form onSubmit={handleSubmit} className="flex items-center">
-          <span className="text-gray-100 mr-2">{isLoading ? "" : ">"}</span>
+          <span className={`text-gray-100 ${isLoading ? "" : "mr-2"}`}>
+            {isLoading ? "" : ">"}
+          </span>
           <input
             ref={inputRef}
             type="text"
