@@ -13,7 +13,6 @@ for ((i=1; i<=N; i++)); do
   ID=$i
   PORT=$((BASE_PORT + i - 1))
 
-  # Generate peer list
   PEERS=()
   for ((j=1; j<=N; j++)); do
     if [ $j -ne $i ]; then

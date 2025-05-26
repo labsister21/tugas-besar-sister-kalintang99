@@ -9,8 +9,13 @@ export const handleRpc = (req: Request, res: Response) => {
   }
 
   if (method === "heartbeat") {
-    console.log(`💓 Received heartbeat from ${params.leaderId}`);
-    return res.json({ jsonrpc: "2.0", result: "ACK", id });
+    console.log(`💓 Received heartbeat from leader ${params.leaderId}`);
+    raftStateStore.lastHeartbeatTimestamp = Date.now();
+    return res.json({
+      jsonrpc: "2.0",
+      result: "OK",
+      id,
+    });
   }
 
   return res.status(400).json({ error: `Unknown method ${method}` });
