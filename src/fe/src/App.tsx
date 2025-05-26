@@ -4,7 +4,7 @@ import Terminal from "@/components/Terminal";
 import type { TerminalLine } from "@/types/terminal";
 
 export default function App() {
-  const [selectedNode, setSelectedNode] = useState<number>(0);
+  const [selectedNode, setSelectedNode] = useState<number>(1);
   const [terminalLines, setTerminalLines] = useState<
     Record<number, TerminalLine[]>
   >({});

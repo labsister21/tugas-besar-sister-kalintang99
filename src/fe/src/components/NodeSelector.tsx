@@ -7,7 +7,7 @@ export default function NodeSelector({
   selectedNode,
   onNodeChange,
 }: NodeSelectorProps) {
-  const nodes = Array.from({ length: 10 }, (_, i) => i);
+  const nodes = Array.from({ length: 10 }, (_, i) => i + 1);
 
   return (
     <div className="flex items-center justify-center gap-4 mb-6">

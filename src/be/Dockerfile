@@ -5,11 +5,11 @@ RUN apk add --no-cache bash
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm install --include=dev
 
 COPY . .
 
 ENV CHOKIDAR_USEPOLLING=true
-EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$ID --port=$PORT --peers=$PEERS"]
+

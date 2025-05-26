@@ -1,18 +1,56 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  backend:
-    container_name: backend
+  backend1:
+    container_name: backend1
     build:
       context: ./be
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./be:/app
       - /app/node_modules
     environment:
+      - ID=1
+      - PORT=3001
+      - PEERS=http://backend2:3002,http://backend3:3003
       - CHOKIDAR_USEPOLLING=true
+    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
+
+  backend2:
+    container_name: backend2
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./be:/app
+      - /app/node_modules
+    environment:
+      - ID=2
+      - PORT=3002
+      - PEERS=http://backend1:3001,http://backend3:3003
+      - CHOKIDAR_USEPOLLING=true
+    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
+
+  backend3:
+    container_name: backend3
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./be:/app
+      - /app/node_modules
+    environment:
+      - ID=3
+      - PORT=3003
+      - PEERS=http://backend1:3001,http://backend2:3002
+      - CHOKIDAR_USEPOLLING=true
+    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS"]
 
   frontend:
     container_name: frontend
@@ -26,3 +64,6 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_WATCH_POLL=true
+    command: ["npm", "run", "dev", "--", "--host"]
+
