@@ -7,8 +7,7 @@ interface RaftState {
   log: [];
   electionTerm: number;
   clusterAddrList: string[];
-  cluterLeaderAddr: string;
-
+  clusterLeaderAddr: string;
   nodeId: number;
   lastHeartbeatTimestamp: number;
 }
@@ -19,7 +18,7 @@ const raftStateStore: RaftState = {
   log: [],
   electionTerm: 0,
   clusterAddrList: [],
-  cluterLeaderAddr: "",
+  clusterLeaderAddr: "",
   nodeId: 0,
   lastHeartbeatTimestamp: Date.now(),
 };
@@ -36,7 +35,7 @@ export function initRaftState(args: any) {
     ? args.peers.split(",").concat(address)
     : [address];
 
-  raftStateStore.cluterLeaderAddr = `http://backend1:3001`;
+  raftStateStore.clusterLeaderAddr = `http://backend1:3001`;
 }
 
 export function printRaftState() {
@@ -46,7 +45,7 @@ export function printRaftState() {
     log: raftStateStore.log,
     electionTerm: raftStateStore.electionTerm,
     clusterAddrList: raftStateStore.clusterAddrList,
-    cluterLeaderAddr: raftStateStore.cluterLeaderAddr,
+    cluterLeaderAddr: raftStateStore.clusterLeaderAddr,
     nodeId: raftStateStore.nodeId,
     lastHeartbeatTimestamp: raftStateStore.lastHeartbeatTimestamp,
   });
