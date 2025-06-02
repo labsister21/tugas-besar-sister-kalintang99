@@ -11,9 +11,11 @@ jsonRpcServer.addMethod("heartbeat", (params: { leaderId: string }) => {
 });
 
 export const handleRpc = async (req: Request, res: Response) => {
-  const jsonRpcResponse = await jsonRpcServer.receive(req.body);
-  if (jsonRpcResponse) {
-    res.json(jsonRpcResponse);
+  const jsonRPCRequest = req.body;
+  const jsonRPCResponse = await jsonRpcServer.receive(jsonRPCRequest);
+
+  if (jsonRPCResponse) {
+    res.json(jsonRPCResponse);
   } else {
     res.sendStatus(204);
   }

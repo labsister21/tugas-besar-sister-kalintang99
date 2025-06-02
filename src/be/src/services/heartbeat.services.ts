@@ -1,49 +1,38 @@
 import { JSONRPCClient } from "json-rpc-2.0";
 import raftStateStore from "@/store/raftState.store";
-
-const HEARTBEAT_INTERVAL = 200;
+import { RaftConfig } from "@/config/config";
+const HEARTBEAT_INTERVAL = RaftConfig.heartBeat.sendInterval;
 
 export const startHeartbeat = () => {
-  if (raftStateStore.status !== "leader") return;
+  if (raftStateStore.type !== "leader") return;
 
-  const clients = raftStateStore.peers.map(
-    (peer) =>
-      new JSONRPCClient((jsonRPCRequest) =>
-        fetch(`${peer}/rpc`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(jsonRPCRequest),
-        }).then((response) => {
-          if (response.ok) {
-            return response.json();
-          } else {
-            return Promise.reject(new Error(`Status ${response.status}`));
-          }
-        })
-      )
+  const peers = raftStateStore.clusterAddrList.filter(
+    (peer) => peer !== raftStateStore.address
   );
+
+  const clients = peers.map((peer, i) => {
+    const client = new JSONRPCClient((jsonRPCRequest) =>
+      fetch(`${peer}/rpc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jsonRPCRequest),
+      })
+        .then((response) => response.json())
+        .then((responseJson) => {
+          client.receive(responseJson);
+        })
+        .catch((err) => {})
+    );
+    return client;
+  });
 
   setInterval(() => {
     clients.forEach(async (client, i) => {
-      try {
-        console.log(`💓 Sending heartbeat to ${raftStateStore.peers[i]}...`);
-        const result = await client.request("heartbeat", {
-          leaderId: raftStateStore.nodeId,
-        });
-        console.log(`✅ ACK from ${raftStateStore.peers[i]}:`, result);
-      } catch (err) {
-        if (err instanceof Error) {
-          console.log(
-            `❌ Heartbeat failed to ${raftStateStore.peers[i]}:`,
-            err.message
-          );
-        } else {
-          console.log(
-            `❌ Heartbeat failed to ${raftStateStore.peers[i]}:`,
-            err
-          );
-        }
-      }
+      console.log(`💓 Sending heartbeat to ${peers[i]}...`);
+      const result = await client.request("heartbeat", {
+        leaderId: raftStateStore.nodeId,
+      });
+      console.log(`✅ ACK from ${peers[i]}:`, result);
     });
   }, HEARTBEAT_INTERVAL);
 };
