@@ -19,7 +19,7 @@ export const startFollowerTimeoutChecker = () => {
 
     if (timeSinceLastHeartbeat > TIMEOUT_THRESHOLD) {
       console.log("❗ Leader is dead or unresponsive. Starting election...");
-      clearInterval(timeoutIntervalId!);
+      // clearInterval(timeoutIntervalId!);
     }
   }, CHECK_INTERVAL);
 };

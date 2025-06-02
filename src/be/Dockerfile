@@ -12,4 +12,3 @@ COPY . .
 ENV CHOKIDAR_USEPOLLING=true
 
 CMD ["sh", "-c", "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$ID --port=$PORT --peers=$PEERS"]
-

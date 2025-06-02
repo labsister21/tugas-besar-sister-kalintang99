@@ -2,6 +2,7 @@ N=${1:-3}
 BASE_PORT=3001
 FRONTEND_PORT=5173
 COMPOSE_FILE="docker-compose.yml"
+NETWORK_NAME="raftnet"
 
 rm -f $COMPOSE_FILE
 
@@ -38,7 +39,7 @@ for ((i=1; i<=N; i++)); do
       - PORT=$PORT
       - PEERS=$PEER_STRING
       - CHOKIDAR_USEPOLLING=true
-    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT --peers=\$\$PEERS"]
+    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT --peers=\$\$PEERS --isDynamic=false"]
 
 EOF
 done
@@ -60,6 +61,11 @@ cat <<EOF >> $COMPOSE_FILE
     command: ["npm", "run", "dev", "--", "--host"]
 
 EOF
+
+echo "networks:" >> $COMPOSE_FILE
+echo "  default:" >> $COMPOSE_FILE
+echo "    name: $NETWORK_NAME" >> $COMPOSE_FILE
+echo "    driver: bridge" >> $COMPOSE_FILE
 
 echo "✅ Generated $COMPOSE_FILE with:"
 echo "  - $N backend servers (ports $BASE_PORT to $((BASE_PORT+N-1)))"

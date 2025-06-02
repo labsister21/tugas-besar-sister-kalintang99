@@ -10,6 +10,7 @@ interface RaftState {
   clusterLeaderAddr: string;
   nodeId: number;
   lastHeartbeatTimestamp: number;
+  peers: string[];
 }
 
 const raftStateStore: RaftState = {
@@ -21,21 +22,44 @@ const raftStateStore: RaftState = {
   clusterLeaderAddr: "",
   nodeId: 0,
   lastHeartbeatTimestamp: Date.now(),
+  peers: [],
 };
 
 export function initRaftState(args: any) {
   const nodeId = args.id || new Date().getTime() % 1000;
   const address = `http://backend${nodeId}:${args.port}`;
-  const type = nodeId === 1 ? "leader" : "follower";
 
   raftStateStore.nodeId = nodeId;
   raftStateStore.address = address;
-  raftStateStore.type = type;
-  raftStateStore.clusterAddrList = args.peers
-    ? args.peers.split(",").concat(address)
-    : [address];
 
-  raftStateStore.clusterLeaderAddr = `http://backend1:3001`;
+  if (args.isDynamic === "false") {
+    const type = nodeId === 1 ? "leader" : "follower";
+
+    raftStateStore.type = type;
+
+    const peerList = args.peers ? args.peers.split(",") : [];
+    raftStateStore.peers = peerList;
+    raftStateStore.clusterAddrList = [...peerList, address];
+
+    console.log("peers:", raftStateStore.peers);
+    console.log("clusterAddrList:", raftStateStore.clusterAddrList);
+
+    raftStateStore.clusterLeaderAddr = `http://backend1:3001`;
+  } else {
+    const leaderId = args.leader;
+    const clusterLeaderAddr = `http://backend${leaderId}:300${leaderId}`;
+    raftStateStore.clusterLeaderAddr = clusterLeaderAddr;
+    raftStateStore.type = "follower";
+
+    console.log(
+      "Requesting membership with leader address:",
+      clusterLeaderAddr
+    );
+
+    import("@/services/membership.services").then(({ requestMembership }) => {
+      requestMembership();
+    });
+  }
 }
 
 export function printRaftState() {
@@ -48,6 +72,7 @@ export function printRaftState() {
     cluterLeaderAddr: raftStateStore.clusterLeaderAddr,
     nodeId: raftStateStore.nodeId,
     lastHeartbeatTimestamp: raftStateStore.lastHeartbeatTimestamp,
+    peers: raftStateStore.peers,
   });
 }
 
