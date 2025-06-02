@@ -1,7 +1,7 @@
 import raftStateStore from "@/store/raftState.store";
 
-const TIMEOUT_THRESHOLD = 15000;
-const CHECK_INTERVAL = 5000;
+const TIMEOUT_THRESHOLD = 800;
+const CHECK_INTERVAL = 100;
 
 export const startFollowerTimeoutChecker = () => {
   if (raftStateStore.status !== "follower") return;

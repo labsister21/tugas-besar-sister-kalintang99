@@ -1,22 +1,20 @@
 import { Request, Response } from "express";
+import { JSONRPCServer } from "json-rpc-2.0";
 import raftStateStore from "@/store/raftState.store";
 
-export const handleRpc = (req: Request, res: Response) => {
-  const { jsonrpc, method, params, id } = req.body;
+const jsonRpcServer = new JSONRPCServer();
 
-  if (jsonrpc !== "2.0") {
-    return res.status(400).json({ error: "Invalid JSON-RPC version" });
+jsonRpcServer.addMethod("heartbeat", (params: { leaderId: string }) => {
+  console.log(`💓 Received heartbeat from leader ${params.leaderId}`);
+  raftStateStore.lastHeartbeatTimestamp = Date.now();
+  return "OK";
+});
+
+export const handleRpc = async (req: Request, res: Response) => {
+  const jsonRpcResponse = await jsonRpcServer.receive(req.body);
+  if (jsonRpcResponse) {
+    res.json(jsonRpcResponse);
+  } else {
+    res.sendStatus(204);
   }
-
-  if (method === "heartbeat") {
-    console.log(`💓 Received heartbeat from leader ${params.leaderId}`);
-    raftStateStore.lastHeartbeatTimestamp = Date.now();
-    return res.json({
-      jsonrpc: "2.0",
-      result: "OK",
-      id,
-    });
-  }
-
-  return res.status(400).json({ error: `Unknown method ${method}` });
 };

@@ -29,7 +29,11 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "json-rpc-2.0": "^1.7.0",
+    "jsonrpc-ts": "^0.3.0",
+    "node-fetch": "^3.3.2"
   }
 }
