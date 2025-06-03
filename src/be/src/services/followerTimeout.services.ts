@@ -18,6 +18,9 @@ export const startFollowerTimeoutChecker = () => {
     const timeSinceLastHeartbeat = now - raftStateStore.lastHeartbeatTimestamp;
 
     if (timeSinceLastHeartbeat > TIMEOUT_THRESHOLD) {
+      console.log(
+        `⏰ Follower timeout detected! Last heartbeat was ${timeSinceLastHeartbeat}ms ago, exceeding threshold of ${TIMEOUT_THRESHOLD}ms.`
+      );
       console.log("❗ Leader is dead or unresponsive. Starting election...");
       // clearInterval(timeoutIntervalId!);
     }

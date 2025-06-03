@@ -5,10 +5,10 @@ import {
 
 type NodeType = "leader" | "follower" | "candidate";
 
-interface LogEntry {
+export interface LogEntry {
   term: number;
   command: {
-    command: "set";
+    type: string;
     params: { key: string; value: string };
   };
 }

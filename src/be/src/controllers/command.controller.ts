@@ -1,46 +1,76 @@
 import { Request, Response } from "express";
 import dataStore from "@/store/data.store";
+import { appendAndBroadcastLogs } from "@/services/logs.service";
+import { LogEntry } from "@/store/raftState.store";
+import raftStateStore from "@/store/raftState.store";
 
-export const ping = (_req: Request, res: Response) => {
+export const ping = async (_req: Request, res: Response) => {
   res.status(200).json({ message: "PONG" });
 };
 
-export const get = (req: Request, res: Response) => {
+export const get = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key);
   res.status(200).json({ value });
 };
 
-export const set = (req: Request, res: Response) => {
+export const set = async (req: Request, res: Response) => {
   const { key, value } = req.body;
   if (typeof key !== "string" || typeof value !== "string") {
     res.status(400).json({ error: "Invalid key or value" });
     return;
   }
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "set",
+      params: { key, value },
+    },
+  } as LogEntry);
+
   dataStore.set(key, value);
   res.status(200).json({ message: "OK" });
 };
 
-export const strln = (req: Request, res: Response) => {
+export const strln = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key) || "";
   res.status(200).json({ length: value.length });
 };
 
-export const del = (req: Request, res: Response) => {
+export const del = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key);
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "delete",
+      params: { key, value: "" },
+    },
+  } as LogEntry);
+
   dataStore.delete(key);
   res.status(200).json({ value });
 };
 
-export const append = (req: Request, res: Response) => {
+export const append = async (req: Request, res: Response) => {
   const { key, value } = req.body;
   if (typeof key !== "string" || typeof value !== "string") {
     res.status(400).json({ error: "Invalid key or value" });
     return;
   }
   const existing = dataStore.get(key) || "";
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "append",
+      params: { key, value },
+    },
+  } as LogEntry);
+
   dataStore.set(key, existing + value);
   res.status(200).json({ message: "OK" });
 };

@@ -2,6 +2,6 @@ export const RaftConfig = {
   heartBeat: {
     checkInterval: 1000,
     sendInterval: 900,
-    timeout: 2000,
+    timeout: 5000,
   },
 };
