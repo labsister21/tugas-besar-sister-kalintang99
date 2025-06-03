@@ -13,7 +13,10 @@ export const createJsonRpcClient = (url: string) => {
       })
       .catch((err) => {
         console.error("JSON-RPC request error:", err);
+        throw new Error(`JSON-RPC request failed: ${err.message}`);
       })
   );
   return client;
 };
+
+export const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));

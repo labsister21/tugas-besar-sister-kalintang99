@@ -14,15 +14,13 @@ services:
     environment:
       - ID=1
       - PORT=3001
-      - PEERS=http://backend2:3002,http://backend3:3003
       - CHOKIDAR_USEPOLLING=true
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS --isDynamic=false",
+        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT",
       ]
-
   backend2:
     container_name: backend2
     build:
@@ -36,15 +34,13 @@ services:
     environment:
       - ID=2
       - PORT=3002
-      - PEERS=http://backend1:3001,http://backend3:3003
       - CHOKIDAR_USEPOLLING=true
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS --isDynamic=false",
+        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
-
   backend3:
     container_name: backend3
     build:
@@ -58,36 +54,13 @@ services:
     environment:
       - ID=3
       - PORT=3003
-      - PEERS=http://backend1:3001,http://backend2:3002
       - CHOKIDAR_USEPOLLING=true
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --peers=$$PEERS --isDynamic=false",
+        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
-
-  backend4:
-    container_name: backend4
-    build:
-      context: ./be
-      dockerfile: Dockerfile
-    ports:
-      - "3004:3004"
-    volumes:
-      - ./be:/app
-      - /app/node_modules
-    environment:
-      - ID=4
-      - PORT=3004
-      - CHOKIDAR_USEPOLLING=true
-    command:
-      [
-        "sh",
-        "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --leader=1 --isDynamic=true",
-      ]
-
   frontend:
     container_name: frontend
     build:

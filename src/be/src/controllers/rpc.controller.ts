@@ -18,7 +18,11 @@ jsonRpcServer.addMethod(
   "requestMembership",
   (params: { nodeId: number; address: string }) => {
     if (raftStateStore.type !== "leader") {
-      return { success: false, error: "Not a leader node" };
+      return {
+        success: false,
+        clusterLeaderAddr: raftStateStore.clusterLeaderAddr,
+        error: `Not a leader node, please contact the leader at ${raftStateStore.clusterLeaderAddr}`,
+      };
     }
 
     console.log(`📝 New node requesting membership: ${params.address}`);

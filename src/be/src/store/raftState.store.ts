@@ -1,5 +1,10 @@
+import {
+  initializeAsLeader,
+  requestMembership,
+} from "@/services/membership.services";
+
 type NodeType = "leader" | "follower" | "candidate";
-type ElectionStatus = "noelection" | "notvoted" | "voted";
+// type ElectionStatus = "noelection" | "notvoted" | "voted";
 
 interface RaftState {
   address: string;
@@ -32,33 +37,13 @@ export function initRaftState(args: any) {
   raftStateStore.nodeId = nodeId;
   raftStateStore.address = address;
 
-  if (args.isDynamic === "false") {
-    const type = nodeId === 1 ? "leader" : "follower";
+  const contactAddress = args.contactAddress;
+  raftStateStore.clusterLeaderAddr = contactAddress;
 
-    raftStateStore.type = type;
-
-    const peerList = args.peers ? args.peers.split(",") : [];
-    raftStateStore.peers = peerList;
-    raftStateStore.clusterAddrList = [...peerList, address];
-
-    console.log("peers:", raftStateStore.peers);
-    console.log("clusterAddrList:", raftStateStore.clusterAddrList);
-
-    raftStateStore.clusterLeaderAddr = `http://backend1:3001`;
+  if (args.contactAddress) {
+    requestMembership();
   } else {
-    const leaderId = args.leader;
-    const clusterLeaderAddr = `http://backend${leaderId}:300${leaderId}`;
-    raftStateStore.clusterLeaderAddr = clusterLeaderAddr;
-    raftStateStore.type = "follower";
-
-    console.log(
-      "Requesting membership with leader address:",
-      clusterLeaderAddr
-    );
-
-    import("@/services/membership.services").then(({ requestMembership }) => {
-      requestMembership();
-    });
+    initializeAsLeader();
   }
 }
 
