@@ -6,11 +6,28 @@ import raftStateStore from "@/store/raftState.store";
 
 export const ping = async (_req: Request, res: Response) => {
   res.status(200).json({ message: "PONG" });
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "ping",
+      params: {},
+    },
+  } as LogEntry);
 };
 
 export const get = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key);
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "get",
+      params: { key },
+    },
+  } as LogEntry);
+
   res.status(200).json({ value });
 };
 
@@ -29,13 +46,21 @@ export const set = async (req: Request, res: Response) => {
     },
   } as LogEntry);
 
-  dataStore.set(key, value);
   res.status(200).json({ message: "OK" });
 };
 
 export const strln = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key) || "";
+
+  await appendAndBroadcastLogs({
+    term: raftStateStore.electionTerm,
+    command: {
+      type: "strln",
+      params: { key },
+    },
+  } as LogEntry);
+
   res.status(200).json({ length: value.length });
 };
 
@@ -46,12 +71,11 @@ export const del = async (req: Request, res: Response) => {
   await appendAndBroadcastLogs({
     term: raftStateStore.electionTerm,
     command: {
-      type: "delete",
+      type: "del",
       params: { key, value: "" },
     },
   } as LogEntry);
 
-  dataStore.delete(key);
   res.status(200).json({ value });
 };
 
@@ -61,7 +85,6 @@ export const append = async (req: Request, res: Response) => {
     res.status(400).json({ error: "Invalid key or value" });
     return;
   }
-  const existing = dataStore.get(key) || "";
 
   await appendAndBroadcastLogs({
     term: raftStateStore.electionTerm,
@@ -71,6 +94,5 @@ export const append = async (req: Request, res: Response) => {
     },
   } as LogEntry);
 
-  dataStore.set(key, existing + value);
   res.status(200).json({ message: "OK" });
 };
