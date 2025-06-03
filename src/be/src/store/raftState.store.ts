@@ -4,18 +4,27 @@ import {
 } from "@/services/membership.services";
 
 type NodeType = "leader" | "follower" | "candidate";
-// type ElectionStatus = "noelection" | "notvoted" | "voted";
+
+interface LogEntry {
+  term: number;
+  command: {
+    command: "set";
+    params: { key: string; value: string };
+  };
+}
 
 interface RaftState {
   address: string;
   type: NodeType;
-  log: [];
+  log: LogEntry[];
   electionTerm: number;
   clusterAddrList: string[];
   clusterLeaderAddr: string;
   nodeId: number;
   lastHeartbeatTimestamp: number;
   peers: string[];
+  commitIndex: number;
+  lastApplied: number;
 }
 
 const raftStateStore: RaftState = {
@@ -28,6 +37,8 @@ const raftStateStore: RaftState = {
   nodeId: 0,
   lastHeartbeatTimestamp: Date.now(),
   peers: [],
+  commitIndex: -1,
+  lastApplied: -1,
 };
 
 export function initRaftState(args: any) {
@@ -54,10 +65,12 @@ export function printRaftState() {
     log: raftStateStore.log,
     electionTerm: raftStateStore.electionTerm,
     clusterAddrList: raftStateStore.clusterAddrList,
-    cluterLeaderAddr: raftStateStore.clusterLeaderAddr,
+    clusterLeaderAddr: raftStateStore.clusterLeaderAddr,
     nodeId: raftStateStore.nodeId,
     lastHeartbeatTimestamp: raftStateStore.lastHeartbeatTimestamp,
     peers: raftStateStore.peers,
+    commitIndex: raftStateStore.commitIndex,
+    lastApplied: raftStateStore.lastApplied,
   });
 }
 

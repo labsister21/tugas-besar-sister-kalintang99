@@ -8,11 +8,59 @@ import {
 
 const jsonRpcServer = new JSONRPCServer();
 
-jsonRpcServer.addMethod("heartbeat", (params: { leaderId: string }) => {
-  console.log(`💓 Received heartbeat from leader ${params.leaderId}`);
-  raftStateStore.lastHeartbeatTimestamp = Date.now();
-  return "OK";
-});
+jsonRpcServer.addMethod(
+  "appendEntries",
+  (params: {
+    term: number;
+    leaderId: string;
+    prevLogIndex: number;
+    prevLogTerm: number;
+    entries: any[];
+    leaderCommit: number;
+  }) => {
+    if (params.term < raftStateStore.electionTerm) {
+      return { success: false, term: raftStateStore.electionTerm };
+    }
+
+    raftStateStore.electionTerm = params.term;
+    raftStateStore.clusterLeaderAddr = params.leaderId;
+    raftStateStore.lastHeartbeatTimestamp = Date.now();
+
+    if (params.prevLogIndex >= 0) {
+      const prevLog = raftStateStore.log[params.prevLogIndex];
+      if (!prevLog || prevLog.term !== params.prevLogTerm) {
+        return { success: false, term: raftStateStore.electionTerm };
+      }
+    }
+
+    for (let i = 0; i < params.entries.length; i++) {
+      const index = params.prevLogIndex + 1 + i;
+      const newEntry = params.entries[i];
+      if (
+        raftStateStore.log[index] &&
+        raftStateStore.log[index].term !== newEntry.term
+      ) {
+        raftStateStore.log = raftStateStore.log.slice(0, index);
+      }
+
+      if (!raftStateStore.log[index]) {
+        raftStateStore.log[index] = newEntry;
+      }
+    }
+
+    if (params.leaderCommit > raftStateStore.commitIndex) {
+      raftStateStore.commitIndex = Math.min(
+        params.leaderCommit,
+        raftStateStore.log.length - 1
+      );
+    }
+
+    return {
+      success: true,
+      term: raftStateStore.electionTerm,
+    };
+  }
+);
 
 jsonRpcServer.addMethod(
   "requestMembership",
