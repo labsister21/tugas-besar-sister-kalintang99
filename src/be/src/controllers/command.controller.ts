@@ -3,30 +3,31 @@ import dataStore from "@/store/data.store";
 import { appendAndBroadcastLogs } from "@/services/logs.service";
 import { LogEntry } from "@/store/raftState.store";
 import raftStateStore from "@/store/raftState.store";
+import { log } from "console";
 
 export const ping = async (_req: Request, res: Response) => {
-  res.status(200).json({ message: "PONG" });
+  // await appendAndBroadcastLogs({
+  //   term: raftStateStore.electionTerm,
+  //   command: {
+  //     type: "ping",
+  //     params: {},
+  //   },
+  // } as LogEntry);
 
-  await appendAndBroadcastLogs({
-    term: raftStateStore.electionTerm,
-    command: {
-      type: "ping",
-      params: {},
-    },
-  } as LogEntry);
+  res.status(200).json({ message: "PONG" });
 };
 
 export const get = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key);
 
-  await appendAndBroadcastLogs({
-    term: raftStateStore.electionTerm,
-    command: {
-      type: "get",
-      params: { key },
-    },
-  } as LogEntry);
+  // await appendAndBroadcastLogs({
+  //   term: raftStateStore.electionTerm,
+  //   command: {
+  //     type: "get",
+  //     params: { key },
+  //   },
+  // } as LogEntry);
 
   res.status(200).json({ value });
 };
@@ -53,13 +54,13 @@ export const strln = async (req: Request, res: Response) => {
   const key = req.params.key;
   const value = dataStore.get(key) || "";
 
-  await appendAndBroadcastLogs({
-    term: raftStateStore.electionTerm,
-    command: {
-      type: "strln",
-      params: { key },
-    },
-  } as LogEntry);
+  // await appendAndBroadcastLogs({
+  //   term: raftStateStore.electionTerm,
+  //   command: {
+  //     type: "strln",
+  //     params: { key },
+  //   },
+  // } as LogEntry);
 
   res.status(200).json({ length: value.length });
 };
@@ -95,4 +96,21 @@ export const append = async (req: Request, res: Response) => {
   } as LogEntry);
 
   res.status(200).json({ message: "OK" });
+};
+
+export const requestLog = async (_req: Request, res: Response) => {
+  const logs = raftStateStore.log.map((log) => ({
+    term: log.term,
+    command: log.command,
+  }));
+
+  // await appendAndBroadcastLogs({
+  //   term: raftStateStore.electionTerm,
+  //   command: {
+  //     type: "requestLog",
+  //     params: {},
+  //   },
+  // } as LogEntry);
+
+  res.status(200).send(logs);
 };

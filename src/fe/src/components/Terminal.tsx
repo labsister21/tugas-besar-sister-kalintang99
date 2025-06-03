@@ -121,7 +121,11 @@ export default function Terminal({
         className="h-96 overflow-y-auto p-4 font-mono text-sm"
       >
         {lines.map((line, index) => (
-          <div key={index} className={`mb-1 ${getLineColor(line.type)}`}>
+          <div
+            key={index}
+            className={`mb-1 ${getLineColor(line.type)}`}
+            style={{ whiteSpace: "pre" }}
+          >
             {line.content}
           </div>
         ))}

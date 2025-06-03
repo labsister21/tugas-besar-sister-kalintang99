@@ -129,6 +129,20 @@ class ApiService {
       );
     }
   }
+
+  async requestLog(nodeId: number): Promise<any> {
+    try {
+      const result = await this.makeRequest(nodeId, "/requestLog");
+      const prettyLogs = JSON.stringify(result, null, 2);
+      return prettyLogs || "No logs available";
+    } catch (error) {
+      throw new Error(
+        `Request log failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
 }
 
 export const apiService = new ApiService();

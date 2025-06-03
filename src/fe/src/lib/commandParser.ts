@@ -50,6 +50,9 @@ export async function executeCommand(
         }
         return await apiService.append(nodeId, args[0], args[1]);
 
+      case "requestlog":
+        return await apiService.requestLog(nodeId);
+
       case "help":
         return getHelpText();
 
