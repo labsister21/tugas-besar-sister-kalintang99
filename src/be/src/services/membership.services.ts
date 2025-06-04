@@ -67,8 +67,12 @@ export const initializeAsLeader = async () => {
   if (raftStateStore.snapshot) {
     applySnapshot(raftStateStore.snapshot);
     console.log("Applied snapshot:", raftStateStore.snapshot);
-    raftStateStore.commitIndex = raftStateStore.lastIncludedIndex;
-    raftStateStore.lastApplied = raftStateStore.lastIncludedIndex;
+    raftStateStore.commitIndex = raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastApplied = raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastIncludedIndex =
+      raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastIncludedTerm = raftStateStore.snapshot.lastIncludedTerm;
+    raftStateStore.electionTerm = raftStateStore.snapshot.lastIncludedTerm;
   } else {
     console.log("No snapshot found, starting with empty log.");
   }

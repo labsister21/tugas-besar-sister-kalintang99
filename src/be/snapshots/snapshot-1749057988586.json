@@ -11,5 +11,7 @@
     "key9": "val9",
     "key10": "val10"
   },
-  "timestamp": 1749057147367
+  "timestamp": 1749057988586,
+  "lastIncludedIndex": 9,
+  "lastIncludedTerm": 0
 }

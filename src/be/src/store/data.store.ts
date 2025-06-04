@@ -50,6 +50,8 @@ export function saveSnapshot() {
   raftStateStore.snapshot = {
     data: new Map(dataStore),
     timestamp: Date.now(),
+    lastIncludedIndex: raftStateStore.lastIncludedIndex,
+    lastIncludedTerm: raftStateStore.lastIncludedTerm,
   };
 
   raftStateStore.log = raftStateStore.log.filter(
@@ -58,6 +60,9 @@ export function saveSnapshot() {
   raftStateStore.lastIncludedIndex = raftStateStore.commitIndex;
   raftStateStore.lastIncludedTerm =
     raftStateStore.log[raftStateStore.commitIndex]?.term || 0;
+
+  raftStateStore.snapshot.lastIncludedIndex = raftStateStore.lastIncludedIndex;
+  raftStateStore.snapshot.lastIncludedTerm = raftStateStore.lastIncludedTerm;
 
   console.log(
     `[${raftStateStore.address}] Snapshot updated: ${JSON.stringify({

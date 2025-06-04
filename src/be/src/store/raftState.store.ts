@@ -17,6 +17,8 @@ export interface LogEntry {
 export interface Snapshot {
   data: Map<string, string>;
   timestamp: number;
+  lastIncludedIndex: number;
+  lastIncludedTerm: number;
 }
 
 interface RaftState {

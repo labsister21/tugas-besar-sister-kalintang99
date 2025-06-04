@@ -8,6 +8,8 @@ function serializeSnapshot(snapshot: Snapshot): any {
   return {
     data: Object.fromEntries(snapshot.data),
     timestamp: snapshot.timestamp,
+    lastIncludedIndex: snapshot.lastIncludedIndex || -1,
+    lastIncludedTerm: snapshot.lastIncludedTerm || 0,
   };
 }
 
@@ -15,6 +17,8 @@ function deserializeSnapshot(obj: any): Snapshot {
   return {
     data: new Map(Object.entries(obj.data)),
     timestamp: obj.timestamp,
+    lastIncludedIndex: obj.lastIncludedIndex || -1,
+    lastIncludedTerm: obj.lastIncludedTerm || 0,
   };
 }
 

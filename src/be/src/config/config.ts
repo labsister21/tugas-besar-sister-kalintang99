@@ -8,6 +8,6 @@ export const RaftConfig = {
   },
   logCompaction: {
     enabled: true,
-    threshold: 10,
+    threshold: 5,
   },
 };
