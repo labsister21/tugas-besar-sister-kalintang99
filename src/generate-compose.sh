@@ -27,7 +27,7 @@ cat <<EOF >> $COMPOSE_FILE
       - ID=1
       - PORT=3001
       - CHOKIDAR_USEPOLLING=true
-    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT"]
+    command: ["sh", "-c", "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT"]
 EOF
 
 for ((i=2; i<=N; i++)); do
@@ -50,7 +50,7 @@ for ((i=2; i<=N; i++)); do
       - ID=$ID
       - PORT=$PORT
       - CHOKIDAR_USEPOLLING=true
-    command: ["sh", "-c", "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT --contactAddress=$CONTACT_ADDRESS"]
+    command: ["sh", "-c", "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=\$\$ID --port=\$\$PORT --contactAddress=$CONTACT_ADDRESS"]
 EOF
 done
 

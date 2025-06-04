@@ -30,5 +30,5 @@ docker-compose up --build
 docker build -t raftnode ./be
 
 # Run new node
-docker run --name backend4 --network raftnet -p 3004:3004 raftnode sh -c "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=4 --port=3004 --contactAddress=http://backend1:3001"
+docker run --name backend4 --network raftnet -p 3004:3004 raftnode sh -c "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=4 --port=3004 --contactAddress=http://backend1:3001"
 ```
