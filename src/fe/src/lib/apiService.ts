@@ -3,7 +3,7 @@ class ApiService {
     return `http://localhost:${3000 + nodeId}/commands`;
   }
 
-private async makeRequest(
+  private async makeRequest(
     nodeId: number,
     endpoint: string,
     options?: RequestInit
@@ -146,6 +146,20 @@ private async makeRequest(
     } catch (error) {
       throw new Error(
         `Request log failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  async requestStoredData(nodeId: number): Promise<string> {
+    try {
+      const result = await this.makeRequest(nodeId, "/requestdata");
+      const prettyData = JSON.stringify(result, null, 2);
+      return prettyData || "No data available";
+    } catch (error) {
+      throw new Error(
+        `Request stored data failed: ${
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
