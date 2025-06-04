@@ -31,7 +31,15 @@ export const get = async (req: Request, res: Response) => {
   res.status(200).json({ value });
 };
 
+
+
 export const set = async (req: Request, res: Response) => {
+  if (raftStateStore.type !== "leader") {
+    return res.status(403).json({
+      error: "This node is not the leader.",
+      leader: raftStateStore.clusterLeaderAddr,
+    });
+  }
   const { key, value } = req.body;
   if (typeof key !== "string" || typeof value !== "string") {
     res.status(400).json({ error: "Invalid key or value" });

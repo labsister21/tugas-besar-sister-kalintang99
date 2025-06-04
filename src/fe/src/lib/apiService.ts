@@ -3,7 +3,7 @@ class ApiService {
     return `http://localhost:${3000 + nodeId}/commands`;
   }
 
-  private async makeRequest(
+private async makeRequest(
     nodeId: number,
     endpoint: string,
     options?: RequestInit
@@ -19,11 +19,19 @@ class ApiService {
         },
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
+        // Check for leader redirect info
+        if (data && data.leader) {
+          throw new Error(
+            `This node is not the leader. Please connect to the leader at ${data.leader}.`
+          );
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes("fetch")) {
         throw new Error(
