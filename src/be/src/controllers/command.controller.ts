@@ -11,7 +11,7 @@ export const ping = async (_req: Request, res: Response) => {
   //     type: "ping",
   //     params: {},
   //   },
-  // } as LogEntry);
+  // } as Omit<LogEntry, "index">);
 
   res.status(200).json({ message: "PONG" });
 };
@@ -26,7 +26,7 @@ export const get = async (req: Request, res: Response) => {
   //     type: "get",
   //     params: { key },
   //   },
-  // } as LogEntry);
+  // } as Omit<LogEntry, "index">);
 
   res.status(200).json({ value });
 };
@@ -44,7 +44,7 @@ export const set = async (req: Request, res: Response) => {
       type: "set",
       params: { key, value },
     },
-  } as LogEntry);
+  } as Omit<LogEntry, "index">);
 
   res.status(200).json({ message: "OK" });
 };
@@ -59,7 +59,7 @@ export const strln = async (req: Request, res: Response) => {
   //     type: "strln",
   //     params: { key },
   //   },
-  // } as LogEntry);
+  // } as Omit<LogEntry, "index">);
 
   res.status(200).json({ length: value.length });
 };
@@ -74,7 +74,7 @@ export const del = async (req: Request, res: Response) => {
       type: "del",
       params: { key, value: "" },
     },
-  } as LogEntry);
+  } as Omit<LogEntry, "index">);
 
   res.status(200).json({ value });
 };
@@ -92,13 +92,14 @@ export const append = async (req: Request, res: Response) => {
       type: "append",
       params: { key, value },
     },
-  } as LogEntry);
+  } as Omit<LogEntry, "index">);
 
   res.status(200).json({ message: "OK" });
 };
 
 export const requestLog = async (_req: Request, res: Response) => {
   const logs = raftStateStore.log.map((log) => ({
+    index: log.index,
     term: log.term,
     command: log.command,
   }));
@@ -109,7 +110,7 @@ export const requestLog = async (_req: Request, res: Response) => {
   //     type: "requestLog",
   //     params: {},
   //   },
-  // } as LogEntry);
+  // } as Omit<LogEntry, "index">);
 
   res.status(200).send(logs);
 };

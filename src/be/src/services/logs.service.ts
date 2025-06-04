@@ -3,11 +3,23 @@ import raftStateStore from "@/store/raftState.store";
 import { applyToStateMachine } from "@/store/data.store";
 import type { LogEntry } from "@/store/raftState.store";
 
-export const appendAndBroadcastLogs = async (entry: LogEntry) => {
+export const appendAndBroadcastLogs = async (
+  entry: Omit<LogEntry, "index">
+) => {
   if (raftStateStore.type !== "leader") return;
 
-  raftStateStore.log.push(entry);
-  const newIndex = raftStateStore.log.length - 1;
+  const lastLogIndex =
+    raftStateStore.log.length > 0
+      ? raftStateStore.log[raftStateStore.log.length - 1].index
+      : -1;
+
+  const indexedEntry: LogEntry = {
+    ...entry,
+    index: lastLogIndex + 1,
+  };
+
+  raftStateStore.log.push(indexedEntry);
+  const newIndex = indexedEntry.index;
 
   const prevLogIndex = newIndex - 1;
   const prevLogTerm =
@@ -16,9 +28,9 @@ export const appendAndBroadcastLogs = async (entry: LogEntry) => {
   const payload = {
     term: raftStateStore.electionTerm,
     leaderId: raftStateStore.nodeId,
-    prevLogIndex,
-    prevLogTerm,
-    entries: [entry],
+    prevLogIndex: prevLogIndex,
+    prevLogTerm: prevLogTerm,
+    entries: [indexedEntry],
     leaderCommit: raftStateStore.commitIndex,
   };
 
