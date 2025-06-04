@@ -14,6 +14,7 @@ export interface LogEntry {
 }
 
 interface RaftState {
+  votedFor: string | null;
   address: string;
   type: NodeType;
   log: LogEntry[];
@@ -39,6 +40,7 @@ const raftStateStore: RaftState = {
   peers: [],
   commitIndex: -1,
   lastApplied: -1,
+  votedFor: null,
 };
 
 export function initRaftState(args: any) {

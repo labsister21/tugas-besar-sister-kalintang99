@@ -70,6 +70,40 @@ jsonRpcServer.addMethod(
   }
 );
 
+jsonRpcServer.addMethod("requestVote", (params: {
+  term: number;
+  candidateId: string;
+  lastLogIndex: number;
+  lastLogTerm: number;
+}) => {
+  if (params.term < raftStateStore.electionTerm) {
+    return { success: false, term: raftStateStore.electionTerm };
+  }
+
+  if (params.term > raftStateStore.electionTerm) {
+    raftStateStore.electionTerm = params.term;
+    raftStateStore.votedFor = null;
+  }
+
+  const localLastLogTerm = raftStateStore.log[raftStateStore.log.length-1].term;
+  const localLastLogIndex = raftStateStore.lastApplied;
+
+  const candidateLogUpToDate =
+    params.lastLogTerm > localLastLogTerm ||
+    (params.lastLogTerm === localLastLogTerm && params.lastLogIndex >= localLastLogIndex);
+
+  if (
+    (raftStateStore.votedFor === null || raftStateStore.votedFor === params.candidateId) &&
+    candidateLogUpToDate
+  ) {
+    raftStateStore.votedFor = params.candidateId;
+    return { success: true, term: raftStateStore.electionTerm };
+  }
+
+  return { success: false, term: raftStateStore.electionTerm };
+});
+
+
 jsonRpcServer.addMethod(
   "requestMembership",
   async (params: { nodeId: number; address: string }) => {
