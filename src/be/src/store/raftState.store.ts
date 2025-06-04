@@ -20,6 +20,7 @@ export interface Snapshot {
 }
 
 interface RaftState {
+  votedFor: string | null;
   address: string;
   type: NodeType;
   log: LogEntry[];
@@ -55,6 +56,7 @@ const raftStateStore: RaftState = {
   lastIncludedIndex: -1,
   lastIncludedTerm: 0,
   snapshot: null,
+  votedFor: null,
 };
 
 export function initRaftState(args: any) {
