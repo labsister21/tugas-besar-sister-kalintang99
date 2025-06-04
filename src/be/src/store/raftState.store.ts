@@ -6,11 +6,17 @@ import {
 type NodeType = "leader" | "follower" | "candidate";
 
 export interface LogEntry {
+  index: number;
   term: number;
   command: {
     type: string;
     params: { key: string; value: string };
   };
+}
+
+export interface Snapshot {
+  data: string;
+  timestamp: number;
 }
 
 interface RaftState {
@@ -26,6 +32,11 @@ interface RaftState {
   peers: string[];
   commitIndex: number;
   lastApplied: number;
+
+  // log compaction semoga tidak error
+  lastIncludedIndex: number;
+  lastIncludedTerm: number;
+  snapshot: Snapshot | null;
 }
 
 const raftStateStore: RaftState = {
@@ -40,6 +51,11 @@ const raftStateStore: RaftState = {
   peers: [],
   commitIndex: -1,
   lastApplied: -1,
+
+  // log compaction
+  lastIncludedIndex: 0,
+  lastIncludedTerm: 0,
+  snapshot: null,
   votedFor: null,
 };
 

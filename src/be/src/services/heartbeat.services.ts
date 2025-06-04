@@ -10,7 +10,8 @@ export const startHeartbeat = () => {
 
   const sendHeartbeat = async () => {
     const peers = raftStateStore.peers;
-    const lastLogIndex = raftStateStore.log.length - 1;
+    const lastLogIndex =
+      raftStateStore.log[raftStateStore.log.length - 1]?.index || -1;
     const prevLogTerm =
       lastLogIndex >= 0 ? raftStateStore.log[lastLogIndex].term : 0;
 
@@ -18,7 +19,7 @@ export const startHeartbeat = () => {
       term: raftStateStore.electionTerm,
       leaderId: raftStateStore.nodeId,
       prevLogIndex: lastLogIndex,
-      prevLogTerm,
+      prevLogTerm: prevLogTerm,
       entries: [],
       leaderCommit: raftStateStore.commitIndex,
     };

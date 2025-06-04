@@ -31,7 +31,10 @@ jsonRpcServer.addMethod(
     raftStateStore.lastHeartbeatTimestamp = Date.now();
 
     if (params.prevLogIndex >= 0) {
-      const prevLog = raftStateStore.log[params.prevLogIndex];
+      const prevLog =
+        raftStateStore.log[
+          params.prevLogIndex - raftStateStore.lastIncludedIndex
+        ];
       if (!prevLog || prevLog.term !== params.prevLogTerm) {
         return { success: false, term: raftStateStore.electionTerm };
       }
@@ -43,14 +46,19 @@ jsonRpcServer.addMethod(
       const newEntry = params.entries[0];
 
       if (
-        raftStateStore.log[index] &&
-        raftStateStore.log[index].term !== newEntry.term
+        raftStateStore.log[index - raftStateStore.lastIncludedIndex] &&
+        raftStateStore.log[index - raftStateStore.lastIncludedIndex].term !==
+          newEntry.term
       ) {
-        raftStateStore.log = raftStateStore.log.slice(0, index);
+        raftStateStore.log = raftStateStore.log.slice(
+          0,
+          index - raftStateStore.lastIncludedIndex
+        );
       }
 
-      if (!raftStateStore.log[index]) {
-        raftStateStore.log[index] = newEntry;
+      if (!raftStateStore.log[index - raftStateStore.lastIncludedIndex]) {
+        console.log("📝 Adding new log entry:", newEntry);
+        raftStateStore.log[index - raftStateStore.lastIncludedIndex] = newEntry;
       }
     }
 
@@ -61,7 +69,7 @@ jsonRpcServer.addMethod(
     ) {
       raftStateStore.commitIndex = Math.min(
         params.leaderCommit,
-        raftStateStore.log.length - 1
+        raftStateStore.log[raftStateStore.log.length - 1].index
       );
       applyCommittedEntries();
     }
