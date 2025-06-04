@@ -1,10 +1,12 @@
-import { send } from "process";
-
 export const RaftConfig = {
   heartBeat: {
-    checkInterval: 1000,
-    sendInterval: 900,
+    checkInterval: 907,
+    sendInterval: 500,
     timeout: 5000,
     sendTimeout: 300,
+  },
+  logCompaction: {
+    enabled: true,
+    threshold: 10,
   },
 };

@@ -13,7 +13,9 @@ export const startHeartbeat = () => {
     const lastLogIndex =
       raftStateStore.log[raftStateStore.log.length - 1]?.index || -1;
     const prevLogTerm =
-      lastLogIndex >= 0 ? raftStateStore.log[lastLogIndex].term : 0;
+      lastLogIndex >= 0
+        ? raftStateStore.log[raftStateStore.log.length - 1].term
+        : 0;
 
     const payload = {
       term: raftStateStore.electionTerm,

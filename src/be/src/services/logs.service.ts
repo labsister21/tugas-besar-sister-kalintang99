@@ -1,6 +1,6 @@
 import { createJsonRpcClient } from "@/utils/utils";
 import raftStateStore from "@/store/raftState.store";
-import { applyToStateMachine } from "@/store/data.store";
+import { applyToStateMachine, saveSnapshot } from "@/store/data.store";
 import type { LogEntry } from "@/store/raftState.store";
 
 export const appendAndBroadcastLogs = async (
@@ -8,22 +8,26 @@ export const appendAndBroadcastLogs = async (
 ) => {
   if (raftStateStore.type !== "leader") return;
 
-  const lastLogIndex =
-    raftStateStore.log.length > 0
-      ? raftStateStore.log[raftStateStore.log.length - 1].index
-      : -1;
+  const prevLog = raftStateStore.log[raftStateStore.log.length - 1];
+  const prevLogIndex = prevLog
+    ? prevLog.index
+    : raftStateStore.lastIncludedIndex;
+  const prevLogTerm = prevLog ? prevLog.term : raftStateStore.lastIncludedTerm;
+
+  const trueIndex = prevLogIndex + 1 + (raftStateStore.lastIncludedIndex + 1);
 
   const indexedEntry: LogEntry = {
     ...entry,
-    index: lastLogIndex + 1,
+    index: prevLogIndex + 1,
+    term: raftStateStore.electionTerm,
   };
 
-  raftStateStore.log.push(indexedEntry);
-  const newIndex = indexedEntry.index;
+  // const prevLogIndex =
+  //   raftStateStore.log[raftStateStore.log.length - 1]?.index || -1;
+  // const prevLogTerm =
+  //   raftStateStore.log[raftStateStore.log.length - 1]?.term || 0;
 
-  const prevLogIndex = newIndex - 1;
-  const prevLogTerm =
-    prevLogIndex >= 0 ? raftStateStore.log[prevLogIndex].term : 0;
+  raftStateStore.log.push(indexedEntry);
 
   const payload = {
     term: raftStateStore.electionTerm,
@@ -53,8 +57,8 @@ export const appendAndBroadcastLogs = async (
       if (success) {
         successCount++;
         if (successCount === majority) {
-          console.log("Majority acknowledged new entry, committing...");
-          raftStateStore.commitIndex = newIndex;
+          console.log("Majority acknowledged new entry, committing....");
+          raftStateStore.commitIndex = indexedEntry.index;
           applyCommittedEntries();
           resolve();
         }
@@ -66,7 +70,10 @@ export const appendAndBroadcastLogs = async (
 export const applyCommittedEntries = () => {
   while (raftStateStore.lastApplied < raftStateStore.commitIndex) {
     raftStateStore.lastApplied++;
-    const entry = raftStateStore.log[raftStateStore.lastApplied];
+    const entry =
+      raftStateStore.log[
+        raftStateStore.lastApplied - (raftStateStore.lastIncludedIndex + 1)
+      ];
     applyToStateMachine(entry);
   }
 };

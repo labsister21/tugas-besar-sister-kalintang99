@@ -4,6 +4,10 @@ import { startFollowerTimeoutChecker } from "./followerTimeout.services";
 import { startHeartbeat } from "./heartbeat.services";
 import { delay } from "@/utils/utils";
 
+import type { Snapshot } from "@/store/raftState.store";
+import { applySnapshot } from "@/store/data.store";
+import { loadSnapshotFromFile } from "@/utils/snapshot";
+
 export const requestMembership = async () => {
   if (raftStateStore.type !== "follower") return;
 
@@ -58,7 +62,16 @@ export const broadcastNewMember = async (newMemberAddress: string) => {
   });
 };
 
-export const initializeAsLeader = () => {
+export const initializeAsLeader = async () => {
+  raftStateStore.snapshot = await loadSnapshotFromFile();
+  if (raftStateStore.snapshot) {
+    applySnapshot(raftStateStore.snapshot);
+    console.log("Applied snapshot:", raftStateStore.snapshot);
+    raftStateStore.commitIndex = raftStateStore.lastIncludedIndex;
+    raftStateStore.lastApplied = raftStateStore.lastIncludedIndex;
+  } else {
+    console.log("No snapshot found, starting with empty log.");
+  }
   raftStateStore.type = "leader";
   raftStateStore.clusterAddrList = [raftStateStore.address];
   raftStateStore.peers = [];
@@ -75,7 +88,19 @@ export const initializeAsFollower = (data: {
   electionTerm: number;
   clusterAddrList: string[];
   clusterLeaderAddr: string;
+  snapshot: Snapshot | null;
+  lastIncludedIndex: number;
+  lastIncludedTerm: number;
 }) => {
+  if (data.snapshot) {
+    applySnapshot(data.snapshot);
+    console.log("Applied snapshot:", data.snapshot);
+    raftStateStore.commitIndex = data.lastIncludedIndex;
+    raftStateStore.lastApplied = data.lastIncludedIndex;
+  } else {
+    console.log("No snapshot provided, starting with empty log.");
+  }
+
   raftStateStore.type = "follower";
   raftStateStore.log = data.log;
   raftStateStore.electionTerm = data.electionTerm;
@@ -84,6 +109,8 @@ export const initializeAsFollower = (data: {
   raftStateStore.peers = data.clusterAddrList.filter(
     (addr) => addr !== raftStateStore.address
   );
+  raftStateStore.lastIncludedIndex = data.lastIncludedIndex;
+  raftStateStore.lastIncludedTerm = data.lastIncludedTerm;
 
   console.log("Initialized as follower with address:", raftStateStore.address);
 

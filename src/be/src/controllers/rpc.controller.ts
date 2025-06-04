@@ -8,6 +8,7 @@ import {
 } from "@/services/membership.services";
 import { applyCommittedEntries } from "@/services/logs.service";
 import type { LogEntry } from "@/store/raftState.store";
+import { snapshot } from "node:test";
 
 const jsonRpcServer = new JSONRPCServer();
 
@@ -30,12 +31,16 @@ jsonRpcServer.addMethod(
     raftStateStore.clusterLeaderAddr = params.leaderId;
     raftStateStore.lastHeartbeatTimestamp = Date.now();
 
-    if (params.prevLogIndex >= 0) {
+    if (params.prevLogIndex - (raftStateStore.lastIncludedIndex + 1) >= 0) {
       const prevLog =
         raftStateStore.log[
-          params.prevLogIndex - raftStateStore.lastIncludedIndex
+          params.prevLogIndex - (raftStateStore.lastIncludedIndex + 1)
         ];
       if (!prevLog || prevLog.term !== params.prevLogTerm) {
+        // console.log(
+        //   `❌ Log mismatch at index ${params.prevLogIndex}, expected term ${params.prevLogTerm}, got ${prevLog?.term}`
+        // );
+        // console.log(raftStateStore.log);
         return { success: false, term: raftStateStore.electionTerm };
       }
     }
@@ -46,27 +51,33 @@ jsonRpcServer.addMethod(
       const newEntry = params.entries[0];
 
       if (
-        raftStateStore.log[index - raftStateStore.lastIncludedIndex] &&
-        raftStateStore.log[index - raftStateStore.lastIncludedIndex].term !==
-          newEntry.term
+        raftStateStore.log[index - (raftStateStore.lastIncludedIndex + 1)] &&
+        raftStateStore.log[index - (raftStateStore.lastIncludedIndex + 1)]
+          .term !== newEntry.term
       ) {
         raftStateStore.log = raftStateStore.log.slice(
           0,
-          index - raftStateStore.lastIncludedIndex
+          index - (raftStateStore.lastIncludedIndex + 1)
         );
       }
 
-      if (!raftStateStore.log[index - raftStateStore.lastIncludedIndex]) {
-        console.log("📝 Adding new log entry:", newEntry);
-        raftStateStore.log[index - raftStateStore.lastIncludedIndex] = newEntry;
+      if (!raftStateStore.log[index - (raftStateStore.lastIncludedIndex + 1)]) {
+        // console.log("📝 Adding new log entry:", newEntry);
+        raftStateStore.log[index - (raftStateStore.lastIncludedIndex + 1)] =
+          newEntry;
       }
     }
 
     // commit entries kalau leaderCommit lebih besar dari commitIndex
+    // console.log("leaderCommit:", params.leaderCommit);
+    // console.log("my commitIndex:", raftStateStore.commitIndex);
     if (
       params.entries.length === 0 &&
       params.leaderCommit > raftStateStore.commitIndex
     ) {
+      // console.log(
+      //   `📝 Committing entries up to index ${params.leaderCommit} from index ${raftStateStore.commitIndex}`
+      // );
       raftStateStore.commitIndex = Math.min(
         params.leaderCommit,
         raftStateStore.log[raftStateStore.log.length - 1].index
@@ -104,6 +115,12 @@ jsonRpcServer.addMethod(
       electionTerm: raftStateStore.electionTerm,
       clusterAddrList: raftStateStore.clusterAddrList,
       clusterLeaderAddr: raftStateStore.address,
+      snapshot: {
+        data: Object.fromEntries(raftStateStore.snapshot?.data ?? new Map()),
+        timestamp: raftStateStore.snapshot?.timestamp ?? Date.now(),
+      },
+      lastIncludedIndex: raftStateStore.lastIncludedIndex,
+      lastIncludedTerm: raftStateStore.lastIncludedTerm,
     };
   }
 );

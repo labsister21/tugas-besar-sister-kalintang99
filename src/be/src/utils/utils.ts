@@ -1,4 +1,5 @@
 import { JSONRPCClient } from "json-rpc-2.0";
+import { LogEntry } from "@/store/raftState.store";
 
 export const createJsonRpcClient = (url: string) => {
   const client = new JSONRPCClient((jsonRPCRequest) =>

@@ -15,7 +15,7 @@ export interface LogEntry {
 }
 
 export interface Snapshot {
-  data: string;
+  data: Map<string, string>;
   timestamp: number;
 }
 
@@ -52,7 +52,7 @@ const raftStateStore: RaftState = {
   lastApplied: -1,
 
   // log compaction
-  lastIncludedIndex: 0,
+  lastIncludedIndex: -1,
   lastIncludedTerm: 0,
   snapshot: null,
 };

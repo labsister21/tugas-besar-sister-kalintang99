@@ -1,5 +1,7 @@
-import type { LogEntry } from "@/store/raftState.store";
+import type { LogEntry, Snapshot } from "@/store/raftState.store";
 import raftStateStore from "@/store/raftState.store";
+import { RaftConfig } from "@/config/config";
+import { saveSnapshotToFile } from "@/utils/snapshot";
 
 const dataStore = new Map<string, string>();
 
@@ -32,6 +34,63 @@ export function applyToStateMachine(entry: LogEntry) {
       `[${raftStateStore.address}] Unknown command/command is read-only: ${JSON.stringify(command)}`
     );
   }
+
+  if (
+    RaftConfig.logCompaction.enabled &&
+    raftStateStore.log.length >= RaftConfig.logCompaction.threshold
+  ) {
+    saveSnapshot();
+    if (raftStateStore.type === "leader") {
+      saveSnapshotToFile(raftStateStore.snapshot!);
+    }
+  }
+}
+
+export function saveSnapshot() {
+  raftStateStore.snapshot = {
+    data: new Map(dataStore),
+    timestamp: Date.now(),
+  };
+
+  raftStateStore.log = raftStateStore.log.filter(
+    (entry) => entry.index > raftStateStore.commitIndex
+  );
+  raftStateStore.lastIncludedIndex = raftStateStore.commitIndex;
+  raftStateStore.lastIncludedTerm =
+    raftStateStore.log[raftStateStore.commitIndex]?.term || 0;
+
+  console.log(
+    `[${raftStateStore.address}] Snapshot updated: ${JSON.stringify({
+      ...raftStateStore.snapshot,
+      data: mapToObject(raftStateStore.snapshot.data),
+    })}`
+  );
+}
+
+export const applySnapshot = (snapshot: Snapshot) => {
+  dataStore.clear();
+
+  const mapData =
+    snapshot.data instanceof Map
+      ? snapshot.data
+      : (new Map(Object.entries(snapshot.data)) as Map<string, string>);
+
+  mapData.forEach((value, key) => {
+    dataStore.set(key, value);
+  });
+
+  raftStateStore.snapshot = {
+    ...snapshot,
+    data: mapData,
+  };
+};
+
+function mapToObject(map: Map<string, string>): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (const [key, value] of map.entries()) {
+    obj[key] = value;
+  }
+  return obj;
 }
 
 export default dataStore;
