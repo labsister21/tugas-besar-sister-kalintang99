@@ -4,8 +4,8 @@ import raftStateStore from "@/store/raftState.store";
 import {
   updateClusterMembers,
   broadcastNewMember,
+  isAlreadyMember,
 } from "@/services/membership.services";
-import { applyToStateMachine } from "@/store/data.store";
 import { applyCommittedEntries } from "@/services/logs.service";
 import type { LogEntry } from "@/store/raftState.store";
 
@@ -72,7 +72,7 @@ jsonRpcServer.addMethod(
 
 jsonRpcServer.addMethod(
   "requestMembership",
-  (params: { nodeId: number; address: string }) => {
+  async (params: { nodeId: number; address: string }) => {
     if (raftStateStore.type !== "leader") {
       return {
         success: false,
@@ -83,15 +83,19 @@ jsonRpcServer.addMethod(
 
     console.log(`📝 New node requesting membership: ${params.address}`);
 
-    updateClusterMembers(params.address);
-    broadcastNewMember(params.address);
+    if (!isAlreadyMember(params.address)) {
+      await broadcastNewMember(params.address);
+      updateClusterMembers(params.address);
+    } else {
+      console.log(`Node ${params.address} is already a member.`);
+    }
 
     return {
       success: true,
       log: raftStateStore.log,
       electionTerm: raftStateStore.electionTerm,
       clusterAddrList: raftStateStore.clusterAddrList,
-      clusterLeaderAddr: raftStateStore.clusterLeaderAddr,
+      clusterLeaderAddr: raftStateStore.address,
     };
   }
 );

@@ -12,7 +12,7 @@ export const createJsonRpcClient = (url: string) => {
         client.receive(responseJson);
       })
       .catch((err) => {
-        console.error("JSON-RPC request error:", err);
+        // console.error("JSON-RPC request error:", err);
         throw new Error(`JSON-RPC request failed: ${err.message}`);
       })
   );

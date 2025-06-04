@@ -61,6 +61,27 @@ services:
         "-c",
         "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
+
+  backend4:
+    container_name: backend4
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./be:/app
+      - /app/node_modules
+    environment:
+      - ID=4
+      - PORT=3004
+      - CHOKIDAR_USEPOLLING=true
+    command:
+      [
+        "sh",
+        "-c",
+        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+      ]
   frontend:
     container_name: frontend
     build:

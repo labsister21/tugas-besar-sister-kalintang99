@@ -3,7 +3,6 @@ import dataStore from "@/store/data.store";
 import { appendAndBroadcastLogs } from "@/services/logs.service";
 import { LogEntry } from "@/store/raftState.store";
 import raftStateStore from "@/store/raftState.store";
-import { log } from "console";
 
 export const ping = async (_req: Request, res: Response) => {
   // await appendAndBroadcastLogs({

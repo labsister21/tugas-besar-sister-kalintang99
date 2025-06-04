@@ -26,21 +26,29 @@ export const appendAndBroadcastLogs = async (entry: LogEntry) => {
   const majority = Math.floor((raftStateStore.peers.length + 1) / 2) + 1;
   let successCount = 1;
 
-  for (let i = 0; i < clients.length; i++) {
+  const promises = clients.map(async (client) => {
     try {
-      const result = await clients[i].request("appendEntries", payload);
-      if (result.success) {
+      const result = await client.request("appendEntries", payload);
+      return result.success;
+    } catch {
+      return false;
+    }
+  });
+
+  await new Promise<void>((resolve) => {
+    promises.forEach(async (p) => {
+      const success = await p;
+      if (success) {
         successCount++;
+        if (successCount === majority) {
+          console.log("Majority acknowledged new entry, committing...");
+          raftStateStore.commitIndex = newIndex;
+          applyCommittedEntries();
+          resolve();
+        }
       }
-    } catch {}
-  }
-
-  if (successCount >= majority) {
-    console.log("Majority acknowledged new entry, committing...");
-
-    raftStateStore.commitIndex = newIndex;
-    applyCommittedEntries();
-  }
+    });
+  });
 };
 
 export const applyCommittedEntries = () => {

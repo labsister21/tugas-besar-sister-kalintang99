@@ -90,3 +90,7 @@ export const initializeAsFollower = (data: {
   printRaftState();
   startFollowerTimeoutChecker();
 };
+
+export const isAlreadyMember = (address: string): boolean => {
+  return raftStateStore.clusterAddrList.includes(address);
+};
