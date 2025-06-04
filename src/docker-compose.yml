@@ -19,7 +19,7 @@ services:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT",
       ]
   backend2:
     container_name: backend2
@@ -39,7 +39,7 @@ services:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
   backend3:
     container_name: backend3
@@ -59,7 +59,7 @@ services:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
 
   backend4:
@@ -80,7 +80,7 @@ services:
       [
         "sh",
         "-c",
-        "npx nodemon --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
       ]
   frontend:
     container_name: frontend

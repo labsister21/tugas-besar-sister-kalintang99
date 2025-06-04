@@ -37,12 +37,29 @@ export function applyToStateMachine(entry: LogEntry) {
 
   if (
     RaftConfig.logCompaction.enabled &&
-    raftStateStore.log.length >= RaftConfig.logCompaction.threshold
+    raftStateStore.log.length == RaftConfig.logCompaction.threshold
   ) {
     saveSnapshot();
     if (raftStateStore.type === "leader") {
       saveSnapshotToFile(raftStateStore.snapshot!);
     }
+  }
+  if (
+    RaftConfig.logCompaction.enabled &&
+    raftStateStore.log.length > RaftConfig.logCompaction.threshold
+  ) {
+    truncateLog();
+  }
+}
+
+export function truncateLog() {
+  if (
+    RaftConfig.logCompaction.enabled &&
+    raftStateStore.log.length > RaftConfig.logCompaction.threshold
+  ) {
+    raftStateStore.log = raftStateStore.log.slice(
+      RaftConfig.logCompaction.threshold
+    );
   }
 }
 
@@ -54,9 +71,6 @@ export function saveSnapshot() {
     lastIncludedTerm: raftStateStore.lastIncludedTerm,
   };
 
-  raftStateStore.log = raftStateStore.log.filter(
-    (entry) => entry.index > raftStateStore.commitIndex
-  );
   raftStateStore.lastIncludedIndex = raftStateStore.commitIndex;
   raftStateStore.lastIncludedTerm =
     raftStateStore.log[raftStateStore.commitIndex]?.term || 0;
