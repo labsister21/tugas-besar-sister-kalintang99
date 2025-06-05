@@ -7,7 +7,7 @@ export const RaftConfig = {
     sendTimeout: 300,
   },
   logCompaction: {
-    enabled: true,
+    enabled: false,
     threshold: 5,
   },
 };

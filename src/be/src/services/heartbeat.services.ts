@@ -8,53 +8,55 @@ const HEARTBEAT_TIMEOUT = RaftConfig.heartBeat.sendTimeout;
 export const startHeartbeat = () => {
   if (raftStateStore.type !== "leader") return;
 
-  const sendHeartbeat = async () => {
+  const sendHeartbeat = () => {
     const peers = raftStateStore.peers;
-    const lastLogIndex =
-      raftStateStore.log[raftStateStore.log.length - 1]?.index || -1;
-    const prevLogTerm =
-      lastLogIndex >= 0
-        ? raftStateStore.log[raftStateStore.log.length - 1].term
-        : 0;
+    const prevLog = raftStateStore.log[raftStateStore.log.length - 1];
+    const prevLogIndex = prevLog
+      ? prevLog.index
+      : raftStateStore.lastIncludedIndex;
+    const prevLogTerm = prevLog
+      ? prevLog.term
+      : raftStateStore.lastIncludedTerm;
 
     const payload = {
       term: raftStateStore.electionTerm,
       leaderId: raftStateStore.nodeId,
-      prevLogIndex: lastLogIndex,
+      prevLogIndex: prevLogIndex,
       prevLogTerm: prevLogTerm,
       entries: [],
       leaderCommit: raftStateStore.commitIndex,
       leaderAddress: raftStateStore.address,
     };
 
-    let acked = 0;
+    const heartbeatPromises = peers.map(async (address) => {
+      const client = createJsonRpcClient(address);
 
-    await Promise.allSettled(
-      peers.map(async (address) => {
-        const client = createJsonRpcClient(address);
+      try {
+        const result = await Promise.race([
+          client.request("appendEntries", payload),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), HEARTBEAT_TIMEOUT)
+          ),
+        ]);
 
-        // console.log(`💓 Sending heartbeat to ${address}...`);
-
-        try {
-          const result = await Promise.race([
-            client.request("appendEntries", payload),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Timeout")), HEARTBEAT_TIMEOUT)
-            ),
-          ]);
-
-          if (result.success) {
-            acked++;
-          }
-        } catch (error) {
-          // console.error(`❌ Heartbeat to ${address} failed:`, error);
+        if (result?.success) {
+          return true;
         }
-      })
-    );
+      } catch {
+        console.log(`Heartbeat to ${address} failed or timed out.`);
+      }
 
-    console.log(`💓 Heartbeats: ${acked}/${peers.length} ACKed`);
+      return false;
+    });
 
     setTimeout(sendHeartbeat, HEARTBEAT_INTERVAL);
+
+    Promise.allSettled(heartbeatPromises).then((results) => {
+      const acked = results.filter(
+        (r) => r.status === "fulfilled" && r.value === true
+      ).length;
+      console.log(`💓 Heartbeats: ${acked}/${peers.length} ACKed`);
+    });
   };
 
   sendHeartbeat();

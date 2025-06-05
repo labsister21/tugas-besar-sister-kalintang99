@@ -15,12 +15,18 @@ services:
       - ID=1
       - PORT=3001
       - CHOKIDAR_USEPOLLING=true
+      - MY_ADDR=http://172.25.0.11:3001
+      - CLUSTER_ADDRS=http://172.25.0.11:3001,http://172.25.0.12:3002,http://172.25.0.13:3003,http://172.25.0.14:3004
     command:
       [
         "sh",
         "-c",
         "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT",
       ]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.11
+
   backend2:
     container_name: backend2
     build:
@@ -35,12 +41,18 @@ services:
       - ID=2
       - PORT=3002
       - CHOKIDAR_USEPOLLING=true
+      - MY_ADDR=http://172.25.0.12:3002
+      - CLUSTER_ADDRS=http://172.25.0.11:3001,http://172.25.0.12:3002,http://172.25.0.13:3003,http://172.25.0.14:3004
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://172.25.0.11:3001",
       ]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.12
+
   backend3:
     container_name: backend3
     build:
@@ -55,12 +67,17 @@ services:
       - ID=3
       - PORT=3003
       - CHOKIDAR_USEPOLLING=true
+      - MY_ADDR=http://172.25.0.13:3003
+      - CLUSTER_ADDRS=http://172.25.0.11:3001,http://172.25.0.12:3002,http://172.25.0.13:3003,http://172.25.0.14:3004
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://172.25.0.11:3001",
       ]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.13
 
   backend4:
     container_name: backend4
@@ -76,33 +93,42 @@ services:
       - ID=4
       - PORT=3004
       - CHOKIDAR_USEPOLLING=true
+      - MY_ADDR=http://172.25.0.14:3004
+      - CLUSTER_ADDRS=http://172.25.0.11:3001,http://172.25.0.12:3002,http://172.25.0.13:3003,http://172.25.0.14:3004
     command:
       [
         "sh",
         "-c",
-        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://172.25.0.11:3001",
       ]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.14
 
-  backend5:
-    container_name: backend5
-    build:
-      context: ./be
-      dockerfile: Dockerfile
-    ports:
-      - "3005:3005"
-    volumes:
-      - ./be:/app
-      - /app/node_modules
-    environment:
-      - ID=5
-      - PORT=3005
-      - CHOKIDAR_USEPOLLING=true
-    command:
-      [
-        "sh",
-        "-c",
-        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://backend1:3001",
-      ]
+  # backend5:
+  #   container_name: backend5
+  #   build:
+  #     context: ./be
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3005:3005"
+  #   volumes:
+  #     - ./be:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - ID=5
+  #     - PORT=3005
+  #     - CHOKIDAR_USEPOLLING=true
+  #     - MY_ADDR=http://172.25.0.15:3005
+  #   command:
+  #     [
+  #       "sh",
+  #       "-c",
+  #       "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://172.25.0.11:3001",
+  #     ]
+  #   networks:
+  #     raftnet:
+  #       ipv4_address: 172.25.0.15
 
   frontend:
     container_name: frontend
@@ -118,8 +144,13 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - VITE_WATCH_POLL=true
     command: ["npm", "run", "dev", "--", "--host"]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.16
 
 networks:
-  default:
-    name: raftnet
+  raftnet:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

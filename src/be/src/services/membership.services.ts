@@ -7,6 +7,7 @@ import { delay } from "@/utils/utils";
 import type { Snapshot } from "@/store/raftState.store";
 import { applySnapshot } from "@/store/data.store";
 import { loadSnapshotFromFile } from "@/utils/snapshot";
+import { RaftConfig } from "@/config/config";
 
 export const requestMembership = async () => {
   if (raftStateStore.type !== "follower") return;
@@ -64,7 +65,7 @@ export const broadcastNewMember = async (newMemberAddress: string) => {
 
 export const initializeAsLeader = async () => {
   raftStateStore.snapshot = await loadSnapshotFromFile();
-  if (raftStateStore.snapshot) {
+  if (raftStateStore.snapshot && RaftConfig.logCompaction.enabled) {
     applySnapshot(raftStateStore.snapshot);
     console.log("Applied snapshot:", raftStateStore.snapshot);
     raftStateStore.commitIndex = raftStateStore.snapshot.lastIncludedIndex;

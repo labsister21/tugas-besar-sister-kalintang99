@@ -1,7 +1,9 @@
 import {
   initializeAsLeader,
   requestMembership,
+  // initializeAsClusterMemberStart,
 } from "@/services/membership.services";
+import { startFollowerTimeoutChecker } from "@/services/followerTimeout.services";
 
 type NodeType = "leader" | "follower" | "candidate";
 
@@ -34,8 +36,6 @@ interface RaftState {
   peers: string[];
   commitIndex: number;
   lastApplied: number;
-
-  // log compaction semoga tidak error
   lastIncludedIndex: number;
   lastIncludedTerm: number;
   snapshot: Snapshot | null;
@@ -53,29 +53,49 @@ const raftStateStore: RaftState = {
   peers: [],
   commitIndex: -1,
   lastApplied: -1,
-
-  // log compaction
   lastIncludedIndex: -1,
   lastIncludedTerm: 0,
   snapshot: null,
   votedFor: null,
 };
 
-export function initRaftState(args: any) {
+export async function initRaftState(args: any) {
   const nodeId = args.id || new Date().getTime() % 1000;
-  const address = `http://backend${nodeId}:${args.port}`;
+
+  if (!process.env.MY_ADDR) {
+    throw new Error("MY_ADDR environment variable is not set");
+  }
+  const address = process.env.MY_ADDR;
 
   raftStateStore.nodeId = nodeId;
   raftStateStore.address = address;
+  raftStateStore.clusterLeaderAddr = args.contactAddress;
 
-  const contactAddress = args.contactAddress;
-  raftStateStore.clusterLeaderAddr = contactAddress;
+  // if (!process.env.CLUSTER_ADDRS) {
+  console.log("Server initialized as standalone node.");
 
   if (args.contactAddress) {
     requestMembership();
   } else {
     initializeAsLeader();
   }
+  // } else {
+  //   console.log(
+  //     "Server intialized with cluster addresses:",
+  //     process.env.CLUSTER_ADDRS
+  //   );
+
+  //   await initializeAsClusterMemberStart();
+  //   const clusterAddrList = process.env.CLUSTER_ADDRS.split(",").map((s) =>
+  //     s.trim()
+  //   );
+  //   raftStateStore.clusterAddrList = clusterAddrList;
+  //   raftStateStore.peers = clusterAddrList.filter((addr) => addr !== address);
+  //   raftStateStore.clusterLeaderAddr = "";
+  //   raftStateStore.type = "follower";
+
+  //   startFollowerTimeoutChecker();
+  // }
 }
 
 export function printRaftState() {
@@ -91,6 +111,8 @@ export function printRaftState() {
     peers: raftStateStore.peers,
     commitIndex: raftStateStore.commitIndex,
     lastApplied: raftStateStore.lastApplied,
+    lastIncludedIndex: raftStateStore.lastIncludedIndex,
+    lastIncludedTerm: raftStateStore.lastIncludedTerm,
   });
 }
 
