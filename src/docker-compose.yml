@@ -3,6 +3,8 @@ version: "3.9"
 services:
   backend1:
     container_name: backend1
+    cap_add:
+      - NET_ADMIN
     build:
       context: ./be
       dockerfile: Dockerfile
@@ -29,6 +31,8 @@ services:
 
   backend2:
     container_name: backend2
+    cap_add:
+      - NET_ADMIN
     build:
       context: ./be
       dockerfile: Dockerfile
@@ -55,6 +59,8 @@ services:
 
   backend3:
     container_name: backend3
+    cap_add:
+      - NET_ADMIN
     build:
       context: ./be
       dockerfile: Dockerfile
@@ -81,6 +87,8 @@ services:
 
   backend4:
     container_name: backend4
+    cap_add:
+      - NET_ADMIN
     build:
       context: ./be
       dockerfile: Dockerfile
@@ -107,6 +115,8 @@ services:
 
   # backend5:
   #   container_name: backend5
+  # cap_add:
+  #     - NET_ADMIN
   #   build:
   #     context: ./be
   #     dockerfile: Dockerfile

@@ -1,7 +1,6 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache bash
-
+RUN apk add --no-cache bash iproute2
 WORKDIR /app
 
 COPY package*.json ./
