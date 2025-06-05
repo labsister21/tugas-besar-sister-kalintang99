@@ -24,6 +24,7 @@ export const startHeartbeat = () => {
       prevLogTerm: prevLogTerm,
       entries: [],
       leaderCommit: raftStateStore.commitIndex,
+      leaderAddress: raftStateStore.address,
     };
 
     let acked = 0;

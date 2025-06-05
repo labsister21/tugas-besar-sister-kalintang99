@@ -21,6 +21,7 @@ jsonRpcServer.addMethod(
     prevLogTerm: number;
     entries: LogEntry[];
     leaderCommit: number;
+    leaderAddress: string;
   }) => {
     if (params.term < raftStateStore.electionTerm) {
       return { success: false, term: raftStateStore.electionTerm };
@@ -30,6 +31,10 @@ jsonRpcServer.addMethod(
     raftStateStore.electionTerm = params.term;
     raftStateStore.clusterLeaderAddr = params.leaderId;
     raftStateStore.lastHeartbeatTimestamp = Date.now();
+
+    // refrest state saat new leader elected
+    raftStateStore.clusterLeaderAddr = params.leaderAddress;
+    raftStateStore.votedFor = null;
 
     if (params.prevLogIndex - (raftStateStore.lastIncludedIndex + 1) >= 0) {
       const prevLog =
@@ -89,39 +94,51 @@ jsonRpcServer.addMethod(
   }
 );
 
-jsonRpcServer.addMethod("requestVote", (params: {
-  term: number;
-  candidateId: string;
-  lastLogIndex: number;
-  lastLogTerm: number;
-}) => {
-  if (params.term < raftStateStore.electionTerm) {
+jsonRpcServer.addMethod(
+  "requestVote",
+  (params: {
+    term: number;
+    candidateId: string;
+    lastLogIndex: number;
+    lastLogTerm: number;
+  }) => {
+    if (params.term < raftStateStore.electionTerm) {
+      console.log(
+        `❌ Vote request from ${params.candidateId} for term ${params.term} is outdated. Current term is ${raftStateStore.electionTerm}.`
+      );
+      return { success: false, term: raftStateStore.electionTerm };
+    }
+
+    if (params.term > raftStateStore.electionTerm) {
+      raftStateStore.electionTerm = params.term;
+      raftStateStore.votedFor = null;
+    }
+
+    const localLastLog = raftStateStore.log[raftStateStore.log.length - 1];
+
+    const localLastLogIndex = localLastLog ? localLastLog.index : -1;
+    const localLastLogTerm = localLastLog ? localLastLog.term : 0;
+
+    const candidateLogUpToDate =
+      params.lastLogTerm > localLastLogTerm ||
+      (params.lastLogTerm === localLastLogTerm &&
+        params.lastLogIndex >= localLastLogIndex);
+
+    if (
+      (raftStateStore.votedFor === null ||
+        raftStateStore.votedFor === params.candidateId) &&
+      candidateLogUpToDate
+    ) {
+      raftStateStore.votedFor = params.candidateId;
+      return { success: true, term: raftStateStore.electionTerm };
+    }
+
+    console.log(
+      `❌ Vote request from ${params.candidateId} denied. Current votedFor: ${raftStateStore.votedFor}, candidateLogUpToDate: ${candidateLogUpToDate}`
+    );
     return { success: false, term: raftStateStore.electionTerm };
   }
-
-  if (params.term > raftStateStore.electionTerm) {
-    raftStateStore.electionTerm = params.term;
-    raftStateStore.votedFor = null;
-  }
-
-  const localLastLogTerm = raftStateStore.log[raftStateStore.log.length-1].term;
-  const localLastLogIndex = raftStateStore.lastApplied;
-
-  const candidateLogUpToDate =
-    params.lastLogTerm > localLastLogTerm ||
-    (params.lastLogTerm === localLastLogTerm && params.lastLogIndex >= localLastLogIndex);
-
-  if (
-    (raftStateStore.votedFor === null || raftStateStore.votedFor === params.candidateId) &&
-    candidateLogUpToDate
-  ) {
-    raftStateStore.votedFor = params.candidateId;
-    return { success: true, term: raftStateStore.electionTerm };
-  }
-
-  return { success: false, term: raftStateStore.electionTerm };
-});
-
+);
 
 jsonRpcServer.addMethod(
   "requestMembership",

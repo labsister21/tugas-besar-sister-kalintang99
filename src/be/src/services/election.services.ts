@@ -1,16 +1,19 @@
 import raftStateStore from "@/store/raftState.store";
 import { createJsonRpcClient } from "@/utils/utils";
+import { startHeartbeat } from "./heartbeat.services";
 
 export const startElection = async () => {
   raftStateStore.type = "candidate";
   raftStateStore.electionTerm += 1;
-  raftStateStore.votedFor = raftStateStore.nodeId.toString(); // Self Vote
+  raftStateStore.votedFor = raftStateStore.address.toString();
 
-  const votes = new Set([raftStateStore.nodeId.toString()]);
+  const votes = new Set([raftStateStore.address.toString()]);
   const majority = Math.floor((raftStateStore.peers.length + 1) / 2) + 1;
 
-  const lastLogIndex = raftStateStore.log.length - 1;
-  const lastLogTerm = lastLogIndex >= 0 ? raftStateStore.log[lastLogIndex].term : 0;
+  const lastLog = raftStateStore.log[raftStateStore.log.length - 1];
+
+  const lastLogIndex = lastLog ? lastLog.index : -1;
+  const lastLogTerm = lastLog ? lastLog.term : 0;
 
   await Promise.allSettled(
     raftStateStore.peers.map(async (peer) => {
@@ -18,7 +21,7 @@ export const startElection = async () => {
       try {
         const result = await client.request("requestVote", {
           term: raftStateStore.electionTerm,
-          candidateId: raftStateStore.nodeId.toString(),
+          candidateId: raftStateStore.address.toString(),
           lastLogIndex,
           lastLogTerm,
         });
@@ -26,7 +29,7 @@ export const startElection = async () => {
           votes.add(peer);
         }
       } catch (e) {
-        console.error(`❌ Election to ${peer} failed:`, e);
+        // console.error(`❌ Election to ${peer} failed:`, e);
       }
     })
   );
@@ -34,6 +37,7 @@ export const startElection = async () => {
   if (votes.size >= majority) {
     raftStateStore.type = "leader";
     console.log("Elected as leader for term", raftStateStore.electionTerm);
+    startHeartbeat();
   } else {
     raftStateStore.type = "follower";
   }
