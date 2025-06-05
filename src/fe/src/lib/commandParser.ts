@@ -81,6 +81,7 @@ function getHelpText(): string {
     "  strln <key>            - Get string length of key",
     "  del <key>              - Delete key and return its value",
     "  append <key> <value>   - Append value to existing key",
+    "  showlog                - Show current log entries",
     "  help                   - Show this help message",
     "  clear                  - Clear terminal",
   ];

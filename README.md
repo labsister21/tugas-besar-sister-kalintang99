@@ -3,7 +3,7 @@
 > Repository Tugas Besar 1 IF3130 - Sistem Paralel dan Terdistribusi
 
 <h3>Screenshot</h3>
-<img src="[path/to/screenshot.png]" alt="Tampilan aplikasi">
+<img src="img/screenshot.jpg" alt="Tampilan aplikasi">
 
 <h2>Teknologi yang Digunakan</h2>
 <ul>
