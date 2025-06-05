@@ -1,0 +1,12 @@
+{
+  "data": {
+    "key1": "val1",
+    "key2": "val2",
+    "key3": "val3",
+    "key4": "val4",
+    "key5": "val5"
+  },
+  "timestamp": 1749085041237,
+  "lastIncludedIndex": 9,
+  "lastIncludedTerm": 0
+}

@@ -28,9 +28,17 @@ jsonRpcServer.addMethod(
     }
 
     // update heartbeat timout
+    const now = Date.now();
+
     raftStateStore.electionTerm = params.term;
     raftStateStore.clusterLeaderAddr = params.leaderId;
-    raftStateStore.lastHeartbeatTimestamp = Date.now();
+    raftStateStore.lastHeartbeatTimestamp = now;
+
+    const timeSinceLastHeartbeat = now - raftStateStore.lastHeartbeatTimestamp;
+
+    // console.log(
+    //   `[${raftStateStore.address}] Time since last heartbeat: ${timeSinceLastHeartbeat}ms`
+    // );
 
     // refrest state saat new leader elected
     raftStateStore.clusterLeaderAddr = params.leaderAddress;
@@ -89,6 +97,15 @@ jsonRpcServer.addMethod(
       );
       applyCommittedEntries();
     }
+
+    // setTimeout(() => {
+    //   if (raftStateStore.lastHeartbeatTimestamp !== now) {
+    //     console.log(
+    //       `🚨 TIMESTAMP OVERWRITTEN! Was ${now}, now ${raftStateStore.lastHeartbeatTimestamp}`
+    //     );
+    //     console.trace("Overwrite detected at:");
+    //   }
+    // }, 10);
 
     return { success: true, term: raftStateStore.electionTerm };
   }
