@@ -126,3 +126,23 @@ export const initializeAsFollower = (data: {
 export const isAlreadyMember = (address: string): boolean => {
   return raftStateStore.clusterAddrList.includes(address);
 };
+
+export const initializeAsClusterMemberStart = async () => {
+  raftStateStore.snapshot = await loadSnapshotFromFile();
+  if (raftStateStore.snapshot && RaftConfig.logCompaction.enabled) {
+    applySnapshot(raftStateStore.snapshot);
+    console.log("Applied snapshot:", raftStateStore.snapshot);
+    raftStateStore.commitIndex = raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastApplied = raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastIncludedIndex =
+      raftStateStore.snapshot.lastIncludedIndex;
+    raftStateStore.lastIncludedTerm = raftStateStore.snapshot.lastIncludedTerm;
+    raftStateStore.electionTerm = raftStateStore.snapshot.lastIncludedTerm;
+  } else {
+    console.log("No snapshot found, starting with empty log.");
+  }
+  raftStateStore.type = "follower";
+
+  // startFollowerTimeoutChecker();
+  printRaftState();
+};

@@ -27,6 +27,21 @@ jsonRpcServer.addMethod(
       return { success: false, term: raftStateStore.electionTerm };
     }
 
+    if (params.term > raftStateStore.electionTerm) {
+      raftStateStore.electionTerm = params.term;
+      raftStateStore.votedFor = null;
+      raftStateStore.type = "follower";
+      // stopHeartbeat();
+      // startFollowerTimeoutChecker();
+    } else if (
+      params.term === raftStateStore.electionTerm &&
+      raftStateStore.type !== "follower"
+    ) {
+      raftStateStore.type = "follower";
+      // stopHeartbeat();
+      // startFollowerTimeoutChecker();
+    }
+
     // update heartbeat timout
     const now = Date.now();
 

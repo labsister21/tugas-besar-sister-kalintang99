@@ -1,7 +1,7 @@
 import {
   initializeAsLeader,
   requestMembership,
-  // initializeAsClusterMemberStart,
+  initializeAsClusterMemberStart,
 } from "@/services/membership.services";
 import { startFollowerTimeoutChecker } from "@/services/followerTimeout.services";
 
@@ -71,31 +71,31 @@ export async function initRaftState(args: any) {
   raftStateStore.address = address;
   raftStateStore.clusterLeaderAddr = args.contactAddress;
 
-  // if (!process.env.CLUSTER_ADDRS) {
-  console.log("Server initialized as standalone node.");
+  if (!process.env.CLUSTER_ADDRS) {
+    console.log("Server initialized as standalone node.");
 
-  if (args.contactAddress) {
-    requestMembership();
+    if (args.contactAddress) {
+      requestMembership();
+    } else {
+      initializeAsLeader();
+    }
   } else {
-    initializeAsLeader();
+    console.log(
+      "Server intialized with cluster addresses:",
+      process.env.CLUSTER_ADDRS
+    );
+
+    await initializeAsClusterMemberStart();
+    const clusterAddrList = process.env.CLUSTER_ADDRS.split(",").map((s) =>
+      s.trim()
+    );
+    raftStateStore.clusterAddrList = clusterAddrList;
+    raftStateStore.peers = clusterAddrList.filter((addr) => addr !== address);
+    raftStateStore.clusterLeaderAddr = "";
+    raftStateStore.type = "follower";
+
+    startFollowerTimeoutChecker();
   }
-  // } else {
-  //   console.log(
-  //     "Server intialized with cluster addresses:",
-  //     process.env.CLUSTER_ADDRS
-  //   );
-
-  //   await initializeAsClusterMemberStart();
-  //   const clusterAddrList = process.env.CLUSTER_ADDRS.split(",").map((s) =>
-  //     s.trim()
-  //   );
-  //   raftStateStore.clusterAddrList = clusterAddrList;
-  //   raftStateStore.peers = clusterAddrList.filter((addr) => addr !== address);
-  //   raftStateStore.clusterLeaderAddr = "";
-  //   raftStateStore.type = "follower";
-
-  //   startFollowerTimeoutChecker();
-  // }
 }
 
 export function printRaftState() {

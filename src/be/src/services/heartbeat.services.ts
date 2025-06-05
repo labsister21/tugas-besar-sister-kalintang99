@@ -1,14 +1,27 @@
 import { createJsonRpcClient } from "@/utils/utils";
 import raftStateStore from "@/store/raftState.store";
 import { RaftConfig } from "@/config/config";
+import { startFollowerTimeoutChecker } from "./followerTimeout.services";
 
 const HEARTBEAT_INTERVAL = RaftConfig.heartBeat.sendInterval;
 const HEARTBEAT_TIMEOUT = RaftConfig.heartBeat.sendTimeout;
+
+let heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 export const startHeartbeat = () => {
   if (raftStateStore.type !== "leader") return;
 
   const sendHeartbeat = () => {
+    if (raftStateStore.type !== "leader") {
+      if (heartbeatTimeoutId) {
+        clearTimeout(heartbeatTimeoutId);
+        heartbeatTimeoutId = null;
+        startFollowerTimeoutChecker();
+      }
+      console.log("⛔ Stopping heartbeat: not the leader anymore.");
+      return;
+    }
+
     const peers = raftStateStore.peers;
     const prevLog = raftStateStore.log[raftStateStore.log.length - 1];
     const prevLogIndex = prevLog
@@ -21,8 +34,8 @@ export const startHeartbeat = () => {
     const payload = {
       term: raftStateStore.electionTerm,
       leaderId: raftStateStore.nodeId,
-      prevLogIndex: prevLogIndex,
-      prevLogTerm: prevLogTerm,
+      prevLogIndex,
+      prevLogTerm,
       entries: [],
       leaderCommit: raftStateStore.commitIndex,
       leaderAddress: raftStateStore.address,
@@ -30,7 +43,6 @@ export const startHeartbeat = () => {
 
     const heartbeatPromises = peers.map(async (address) => {
       const client = createJsonRpcClient(address);
-
       try {
         const result = await Promise.race([
           client.request("appendEntries", payload),
@@ -39,17 +51,14 @@ export const startHeartbeat = () => {
           ),
         ]);
 
-        if (result?.success) {
-          return true;
-        }
+        return result?.success === true;
       } catch {
-        console.log(`Heartbeat to ${address} failed or timed out.`);
+        // console.log(`Heartbeat to ${address} failed or timed out.`);
+        return false;
       }
-
-      return false;
     });
 
-    setTimeout(sendHeartbeat, HEARTBEAT_INTERVAL);
+    heartbeatTimeoutId = setTimeout(sendHeartbeat, HEARTBEAT_INTERVAL);
 
     Promise.allSettled(heartbeatPromises).then((results) => {
       const acked = results.filter(
