@@ -162,6 +162,9 @@ jsonRpcServer.addMethod(
       candidateLogUpToDate
     ) {
       raftStateStore.votedFor = params.candidateId;
+      console.log(
+        `🗳️ Vote granted to ${params.candidateId} for term ${params.term}.`
+      );
       return { success: true, term: raftStateStore.electionTerm };
     }
 

@@ -64,6 +64,16 @@ export const startHeartbeat = () => {
       const acked = results.filter(
         (r) => r.status === "fulfilled" && r.value === true
       ).length;
+
+      // print failed target
+
+      const failedTargets = results
+        .map((r, i) => (r.status === "rejected" ? peers[i] : null))
+        .filter(Boolean);
+      if (failedTargets.length > 0)
+        console.log(
+          `❌ Heartbeat failed for targets: ${failedTargets.join(", ")}`
+        );
       console.log(`💓 Heartbeats: ${acked}/${peers.length} ACKed`);
     });
   };

@@ -27,18 +27,20 @@ export const startElection = async () => {
         });
         if (result.success) {
           votes.add(peer);
+          if (votes.size >= majority) {
+            raftStateStore.type = "leader";
+            console.log(
+              "Elected as leader for term",
+              raftStateStore.electionTerm
+            );
+            startHeartbeat();
+          } else {
+            raftStateStore.type = "follower";
+          }
         }
       } catch (e) {
         // console.error(`❌ Election to ${peer} failed:`, e);
       }
     })
   );
-
-  if (votes.size >= majority) {
-    raftStateStore.type = "leader";
-    console.log("Elected as leader for term", raftStateStore.electionTerm);
-    startHeartbeat();
-  } else {
-    raftStateStore.type = "follower";
-  }
 };
