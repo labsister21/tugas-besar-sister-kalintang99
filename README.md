@@ -21,11 +21,6 @@
     <li>Jalankan dengan Docker Compose: <code>docker compose up --build</code></li>
     <li>Akses aplikasi di <code>http://localhost:5173</code></li>
   </ol>
-  
-<h2>Cara Menambah Node Secara Dinamis Saat Runtime</h2>
-  <ol>
-    <li>Otw tulis</code></li>
-  </ol>
 
  <h2>Penjelasan Raft Consensus Protocol</h2>
 
