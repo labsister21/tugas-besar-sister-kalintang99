@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  backend1:
+    container_name: backend1
+    cap_add:
+      - NET_ADMIN
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./be:/app
+      - /app/node_modules
+    environment:
+      - ID=1
+      - PORT=3001
+      - CHOKIDAR_USEPOLLING=true
+      - MY_ADDR=http://172.25.0.11:3001
+    command:
+      [
+        "sh",
+        "-c",
+        "npx nodemon --ignore snapshots/ --exec ts-node -r tsconfig-paths/register src/index.ts --id=$$ID --port=$$PORT --contactAddress=http://172.25.0.11:3002",
+      ]
+    networks:
+      raftnet:
+        ipv4_address: 172.25.0.11
+
+networks:
+  raftnet:
+    external: true
